@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings · Loop &amp; Petal admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/admin/admin.css">
+<style>
+  .toggle-card{display:flex;align-items:center;justify-content:space-between;gap:20px;background:var(--oat-deep);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:18px}
+  .toggle-card .tc-text h3{font-size:1.15rem}
+  .toggle-card .tc-text p{color:var(--ink-soft);font-size:.9rem;margin-top:4px}
+  .switch{position:relative;width:58px;height:32px;flex:none}
+  .switch input{opacity:0;width:0;height:0}
+  .slider{position:absolute;inset:0;background:#cbb;border-radius:999px;transition:.2s;cursor:pointer}
+  .slider:before{content:"";position:absolute;width:24px;height:24px;left:4px;top:4px;background:#fff;border-radius:50%;transition:.2s}
+  .switch input:checked + .slider{background:var(--sage)}
+  .switch input:checked + .slider:before{transform:translateX(26px)}
+  .state-label{font-weight:700;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase}
+  .state-label.on{color:var(--sage-deep)}
+  .state-label.off{color:#8a6d2b}
+  .save-row{display:flex;align-items:center;gap:14px;margin-top:8px}
+  .ig-hint{font-size:.82rem;color:var(--ink-soft);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="layout" id="layout" style="visibility:hidden">
+  <div id="side"></div>
+  <main class="main">
+    <div class="page-head"><div><h1>Settings</h1><p>Your shop links and the custom-order switch.</p></div></div>
+
+    <div class="panel">
+      <h2>Custom orders</h2>
+      <div class="toggle-card">
+        <div class="tc-text">
+          <h3>Accept custom orders</h3>
+          <p>When this is off, the custom-order section on your shop shows a friendly "paused" message and won't take new requests.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <span class="state-label" id="stateLabel">—</span>
+          <label class="switch"><input type="checkbox" id="t_open"><span class="slider"></span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Message shown when custom orders are open</label>
+        <textarea id="t_note" rows="2"></textarea>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Links</h2>
+      <div class="field">
+        <label>Instagram URL</label>
+        <input id="t_instagram" placeholder="https://instagram.com/yourshop">
+        <div class="ig-hint">Paste your full Instagram link. It'll appear in the shop's header and footer. Leave blank to hide it.</div>
+      </div>
+      <div class="field">
+        <label>Contact email</label>
+        <input id="t_email" type="email" placeholder="hello@yourshop.com">
+        <div class="ig-hint">Shown as an "Email us" link in the footer.</div>
+      </div>
+    </div>
+
+    <div class="save-row">
+      <button class="btn" id="saveBtn">Save settings</button>
+      <a class="btn ghost" href="/" target="_blank">Preview shop ↗</a>
+    </div>
+  </main>
+</div>
+<script src="/admin/admin.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+function paintState(){
+  const on = $('t_open').checked;
+  const lbl = $('stateLabel');
+  lbl.textContent = on ? 'Open' : 'Paused';
+  lbl.className = 'state-label ' + (on ? 'on' : 'off');
+}
+(async function(){
+  if(!(await guard())) return;
+  $('side').outerHTML = sidebar('settings');
+  $('layout').style.visibility='visible';
+  const s = await apiJSON('/api/admin/settings');
+  $('t_open').checked = s.customOrdersOpen;
+  $('t_note').value = s.customOrdersNote || '';
+  $('t_instagram').value = s.instagram || '';
+  $('t_email').value = s.email || '';
+  paintState();
+  $('t_open').addEventListener('change', paintState);
+})();
+$('saveBtn').addEventListener('click', async ()=>{
+  const btn = $('saveBtn'); btn.disabled=true; btn.textContent='Saving…';
+  try{
+    await api('/api/admin/settings', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        customOrdersOpen: $('t_open').checked,
+        customOrdersNote: $('t_note').value,
+        instagram: $('t_instagram').value.trim(),
+        email: $('t_email').value.trim()
+      })
+    });
+    toast('Settings saved');
+  }catch{ toast('Could not save'); }
+  btn.disabled=false; btn.textContent='Save settings';
+});
+</script>
+</body>
+</html>

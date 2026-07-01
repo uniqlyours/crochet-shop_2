@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Products · Loop &amp; Petal admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<div class="layout" id="layout" style="visibility:hidden">
+  <div id="side"></div>
+  <main class="main">
+    <div class="page-head">
+      <div><h1>Products</h1><p>Add, edit, photograph and price the things you make.</p></div>
+      <button class="btn" id="addBtn">+ Add a product</button>
+    </div>
+    <div id="list"></div>
+  </main>
+</div>
+
+<!-- add / edit modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">Add a product</h2>
+    <input type="hidden" id="f_id">
+    <div class="field">
+      <label>Photo</label>
+      <div class="photo-pick">
+        <div class="photo-preview" id="preview"><span>No photo<br>yet</span></div>
+        <div>
+          <input type="file" id="f_photo" accept="image/*">
+          <p style="font-size:.78rem;color:var(--ink-soft);margin:8px 0 0">JPG or PNG, up to 6 MB. A bright, square-ish photo looks best.</p>
+        </div>
+      </div>
+    </div>
+    <div class="field"><label>Name</label><input id="f_name" placeholder="e.g. Hearthside Throw"></div>
+    <div class="grid2">
+      <div class="field"><label>Type / short label</label><input id="f_kind" placeholder="e.g. Blanket"></div>
+      <div class="field"><label>Category</label>
+        <select id="f_category">
+          <option>Blankets</option><option>Little ones</option><option>Gifts</option><option>Homeware</option><option>Hats &amp; scarves</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Price (USD)</label><input id="f_price" type="number" min="0" step="1" placeholder="48"></div>
+      <div class="field"><label>Placeholder color <span style="font-weight:400">(if no photo)</span></label><input id="f_colorway" type="color" value="#C9B98E" style="height:44px;padding:4px"></div>
+    </div>
+    <div class="field"><label>Description</label><textarea id="f_description" placeholder="A sentence or two about the piece, the yarn, the size…"></textarea></div>
+    <div class="check-row"><input type="checkbox" id="f_inStock" checked><label for="f_inStock" style="margin:0">Show in shop (in stock)</label></div>
+    <div class="modal-actions">
+      <button class="btn danger" id="closeModal" type="button">Cancel</button>
+      <button class="btn" id="saveBtn">Save product</button>
+    </div>
+  </div>
+</div>
+
+<script src="/admin/admin.js"></script>
+<script>
+let editingId = null;
+const $ = id => document.getElementById(id);
+
+(async function(){
+  if(!(await guard())) return;
+  $('side').outerHTML = sidebar('products');
+  $('layout').style.visibility='visible';
+  load();
+})();
+
+async function load(){
+  const products = await apiJSON('/api/admin/products');
+  const list = $('list');
+  if(!products.length){
+    list.innerHTML = `<div class="empty-note">No products yet.<br><br><button class="btn" onclick="openAdd()">+ Add your first product</button></div>`;
+    return;
+  }
+  list.innerHTML = `<div class="prod-list">${products.map(p=>`
+    <div class="prod">
+      <div class="pthumb">
+        ${p.inStock?'':'<span class="out">Hidden</span>'}
+        ${p.photo ? `<img src="${esc(p.photo)}" alt="">` : `<span class="ph">No photo</span>`}
+      </div>
+      <div class="pbody">
+        <span class="pk">${esc(p.kind||'Handmade')}</span>
+        <h3>${esc(p.name)}</h3>
+        <span class="pp">${money(p.price)}</span>
+      </div>
+      <div class="pact">
+        <button class="btn ghost small" onclick='openEdit(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Edit</button>
+        <button class="btn danger small" onclick="del('${p.id}','${esc(p.name)}')">Delete</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function openAdd(){
+  editingId = null;
+  $('modalTitle').textContent = 'Add a product';
+  $('f_name').value=''; $('f_kind').value=''; $('f_category').value='Gifts';
+  $('f_price').value=''; $('f_colorway').value='#C9B98E'; $('f_description').value='';
+  $('f_inStock').checked = true; $('f_photo').value='';
+  $('preview').innerHTML = '<span>No photo<br>yet</span>';
+  $('modalBg').classList.add('open');
+}
+function openEdit(p){
+  editingId = p.id;
+  $('modalTitle').textContent = 'Edit product';
+  $('f_name').value=p.name||''; $('f_kind').value=p.kind||'';
+  $('f_category').value = [...$('f_category').options].some(o=>o.value===p.category) ? p.category : 'Gifts';
+  $('f_price').value=p.price||0; $('f_colorway').value=p.colorway||'#C9B98E';
+  $('f_description').value=p.description||''; $('f_inStock').checked = p.inStock!==false; $('f_photo').value='';
+  $('preview').innerHTML = p.photo ? `<img src="${esc(p.photo)}" alt="">` : '<span>No photo<br>yet</span>';
+  $('modalBg').classList.add('open');
+}
+function closeModal(){ $('modalBg').classList.remove('open'); }
+
+// live photo preview
+$('f_photo').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const url = URL.createObjectURL(file);
+  $('preview').innerHTML = `<img src="${url}" alt="">`;
+});
+
+async function save(){
+  const name = $('f_name').value.trim();
+  if(!name){ toast('Please give it a name.'); $('f_name').focus(); return; }
+  const fd = new FormData();
+  fd.append('name', name);
+  fd.append('kind', $('f_kind').value.trim());
+  fd.append('category', $('f_category').value);
+  fd.append('price', $('f_price').value || '0');
+  fd.append('colorway', $('f_colorway').value);
+  fd.append('description', $('f_description').value.trim());
+  fd.append('inStock', $('f_inStock').checked ? 'true' : 'false');
+  if($('f_photo').files[0]) fd.append('photo', $('f_photo').files[0]);
+
+  const saveBtn = $('saveBtn'); saveBtn.disabled=true; saveBtn.textContent='Saving…';
+  try{
+    const path = editingId ? `/api/admin/products/${editingId}` : '/api/admin/products';
+    const method = editingId ? 'PUT' : 'POST';
+    const r = await api(path, { method, body: fd });
+    if(!r.ok) throw new Error('Save failed');
+    closeModal(); toast(editingId ? 'Product updated' : 'Product added'); load();
+  }catch(e){ toast(e.message || 'Could not save'); }
+  saveBtn.disabled=false; saveBtn.textContent='Save product';
+}
+
+async function del(id, name){
+  if(!confirm(`Delete "${name}"? This can't be undone.`)) return;
+  const r = await api(`/api/admin/products/${id}`, { method:'DELETE' });
+  if(r.ok){ toast('Product deleted'); load(); }
+}
+
+$('addBtn').addEventListener('click', openAdd);
+$('closeModal').addEventListener('click', closeModal);
+$('saveBtn').addEventListener('click', save);
+$('modalBg').addEventListener('click', e=>{ if(e.target===$('modalBg')) closeModal(); });
+</script>
+</body>
+</html>

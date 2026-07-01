@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard · Loop &amp; Petal admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<div class="layout" id="layout" style="visibility:hidden">
+  <div id="side"></div>
+  <main class="main">
+    <div class="page-head">
+      <div><h1>Dashboard</h1><p>How the shop is doing at a glance.</p></div>
+      <a class="btn" href="/admin/products.html">+ Add a product</a>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div id="cBanner"></div>
+    <div class="panel">
+      <h2>Revenue · last 14 days</h2>
+      <div class="chart" id="chart"></div>
+    </div>
+    <div class="panel">
+      <h2>Recent orders</h2>
+      <div id="recent"></div>
+    </div>
+  </main>
+</div>
+<script src="/admin/admin.js"></script>
+<script>
+(async function(){
+  if(!(await guard())) return;
+  document.getElementById('side').outerHTML = sidebar('home');
+  document.getElementById('layout').style.visibility='visible';
+
+  const stats = await apiJSON('/api/admin/stats');
+  document.getElementById('stats').innerHTML = `
+    <div class="stat accent"><div class="label">Revenue</div><div class="value">${money(stats.revenue)}</div><div class="sub">all time</div></div>
+    <div class="stat"><div class="label">Orders</div><div class="value">${stats.orderCount}</div><div class="sub">${stats.toShip} still to ship</div></div>
+    <div class="stat"><div class="label">Items sold</div><div class="value">${stats.itemsSold}</div><div class="sub">across all orders</div></div>
+    <div class="stat"><div class="label">Avg. order</div><div class="value">${money(stats.avgOrder)}</div><div class="sub">per checkout</div></div>`;
+
+  // custom-orders status banner
+  const open = stats.customOrdersOpen, nr = stats.newRequests || 0;
+  document.getElementById('cBanner').innerHTML = `
+    <div class="panel" style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px;${open?'':'background:#F7EFD9'}">
+      <div>
+        <b style="font-family:'Fraunces';font-size:1.15rem">Custom orders: ${open?'open':'paused'}</b>
+        <div style="color:var(--ink-soft);font-size:.9rem;margin-top:2px">
+          ${nr>0 ? `${nr} new request${nr>1?'s':''} waiting for a reply.` : 'No new custom requests right now.'}
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        ${nr>0?`<a class="btn small" href="/admin/custom-requests.html">View requests</a>`:''}
+        <a class="btn ghost small" href="/admin/settings.html">${open?'Pause':'Re-open'} custom orders</a>
+      </div>
+    </div>`;
+
+  // mini chart — last 14 days
+  const days = [];
+  for(let i=13;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days.push(d.toISOString().slice(0,10)); }
+  const vals = days.map(d=>stats.byDay[d]||0);
+  const max = Math.max(...vals, 1);
+  const chart = document.getElementById('chart');
+  if(vals.every(v=>v===0)){
+    chart.classList.remove('chart'); chart.innerHTML = `<div class="chart-empty">No sales yet — your revenue will chart here as orders come in.</div>`;
+  } else {
+    chart.innerHTML = days.map((d,i)=>{
+      const h = Math.round((vals[i]/max)*100);
+      const lbl = new Date(d).toLocaleDateString('en-US',{month:'numeric',day:'numeric'});
+      return `<div class="bar" style="height:${Math.max(h,2)}%" title="${lbl}: ${money(vals[i])}">${vals[i]?`<b>${money(vals[i]).replace('.00','')}</b>`:''}<span>${lbl}</span></div>`;
+    }).join('');
+  }
+
+  // recent orders
+  const orders = await apiJSON('/api/admin/orders');
+  const recent = orders.slice(0,5);
+  document.getElementById('recent').innerHTML = recent.length ? `
+    <table><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th></tr></thead><tbody>
+    ${recent.map(o=>`<tr>
+      <td><b>${esc(o.number)}</b><div class="addr">${new Date(o.createdAt).toLocaleDateString()}</div></td>
+      <td>${esc(o.customer.name)}<div class="addr">${esc(o.customer.email)}</div></td>
+      <td>${o.items.reduce((n,i)=>n+i.qty,0)}</td>
+      <td><b>${money(o.subtotal)}</b></td>
+      <td><span class="pill ${esc(o.status)}">${esc(o.status)}</span></td>
+    </tr>`).join('')}
+    </tbody></table>
+    <div style="margin-top:16px"><a class="btn ghost small" href="/admin/orders.html">See all orders →</a></div>`
+    : `<div class="empty-note">No orders yet. Once a customer checks out on your shop, it'll appear here with their shipping address.</div>`;
+})();
+</script>
+</body>
+</html>

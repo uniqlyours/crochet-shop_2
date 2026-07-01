@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom requests · Loop &amp; Petal admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/admin/admin.css">
+<style>
+  .pill.Quoted{background:#E6E0F0;color:#6a4f9c}
+  .pill.Closed{background:#E7E2DA;color:var(--ink-soft)}
+  .msg{white-space:pre-wrap;color:var(--ink);font-size:.92rem;max-width:42ch}
+  .banner{display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--oat-deep);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:22px}
+  .banner.paused{background:#F7EFD9}
+  .banner .b-state{font-weight:700}
+</style>
+</head>
+<body>
+<div class="layout" id="layout" style="visibility:hidden">
+  <div id="side"></div>
+  <main class="main">
+    <div class="page-head"><div><h1>Custom requests</h1><p>People asking for something made just for them.</p></div></div>
+    <div id="banner"></div>
+    <div class="panel" id="panel"></div>
+  </main>
+</div>
+<script src="/admin/admin.js"></script>
+<script>
+(async function(){
+  if(!(await guard())) return;
+  document.getElementById('side').outerHTML = sidebar('custom');
+  document.getElementById('layout').style.visibility='visible';
+  render();
+})();
+
+async function render(){
+  const [settings, reqs] = await Promise.all([
+    apiJSON('/api/admin/settings'),
+    apiJSON('/api/admin/custom-requests')
+  ]);
+
+  const open = settings.customOrdersOpen;
+  document.getElementById('banner').innerHTML = `
+    <div class="banner ${open?'':'paused'}">
+      <div>Custom orders are currently <span class="b-state">${open?'open':'paused'}</span>.</div>
+      <a class="btn ghost small" href="/admin/settings.html">${open?'Pause':'Re-open'} in Settings →</a>
+    </div>`;
+
+  const panel = document.getElementById('panel');
+  if(!reqs.length){
+    panel.innerHTML = `<div class="empty-note">No custom requests yet.${open?'' : '<br>(Custom orders are paused, so the request form is hidden on your shop.)'}</div>`;
+    return;
+  }
+  panel.innerHTML = `<table>
+    <thead><tr><th>Received</th><th>From</th><th>Request</th><th>Budget</th><th>Status</th></tr></thead>
+    <tbody>${reqs.map(r=>`
+      <tr>
+        <td class="addr">${new Date(r.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})}<br>${new Date(r.createdAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</td>
+        <td>${esc(r.name)}<div class="addr"><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></div></td>
+        <td><div class="msg">${esc(r.message)}</div></td>
+        <td>${esc(r.budget)||'—'}</td>
+        <td><select class="status-select" data-id="${r.id}">
+          ${['New','Quoted','Closed'].map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}
+        </select></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+
+  panel.querySelectorAll('.status-select').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      await api(`/api/admin/custom-requests/${sel.dataset.id}/status`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status:sel.value})
+      });
+      toast('Updated');
+    });
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orders · Loop &amp; Petal admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+<div class="layout" id="layout" style="visibility:hidden">
+  <div id="side"></div>
+  <main class="main">
+    <div class="page-head">
+      <div><h1>Orders</h1><p>Every order, with the address to ship to. Update the status as you go.</p></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </main>
+</div>
+<script src="/admin/admin.js"></script>
+<script>
+(async function(){
+  if(!(await guard())) return;
+  document.getElementById('side').outerHTML = sidebar('orders');
+  document.getElementById('layout').style.visibility='visible';
+  render();
+})();
+
+async function render(){
+  const orders = await apiJSON('/api/admin/orders');
+  const panel = document.getElementById('panel');
+  if(!orders.length){
+    panel.innerHTML = `<div class="empty-note">No orders yet.<br>When someone checks out on your shop, their order and shipping address show up here.</div>`;
+    return;
+  }
+  panel.innerHTML = `<table>
+    <thead><tr><th>Order</th><th>Customer</th><th>Ship to</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+    <tbody>${orders.map(o=>`
+      <tr>
+        <td><b>${esc(o.number)}</b><div class="addr">${new Date(o.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div></td>
+        <td>${esc(o.customer.name)}<div class="addr">${esc(o.customer.email)}</div></td>
+        <td class="addr">${esc(o.address.line1)}<br>${esc(o.address.city)}${o.address.city&&o.address.state?', ':''}${esc(o.address.state)} ${esc(o.address.zip)}</td>
+        <td>${o.items.map(i=>`${i.qty}× ${esc(i.name)}`).join('<br>')}</td>
+        <td><b>${money(o.subtotal)}</b></td>
+        <td>
+          <select class="status-select" data-id="${o.id}">
+            ${['New','Making','Shipped'].map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </td>
+      </tr>`).join('')}
+    </tbody></table>`;
+
+  panel.querySelectorAll('.status-select').forEach(sel=>{
+    sel.addEventListener('change', async ()=>{
+      await api(`/api/admin/orders/${sel.dataset.id}/status`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status:sel.value})
+      });
+      toast('Status updated');
+    });
+  });
+}
+</script>
+</body>
+</html>

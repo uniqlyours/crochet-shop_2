@@ -1,0 +1,303 @@
+{
+  "products": [
+    {
+      "id": "p_pink_fish_keychain",
+      "name": "Pink Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A soft hand-crocheted pink fish — clip it onto your keys or bag.",
+      "photo": "/uploads/pink-fish.jpg",
+      "colorway": "#E8B7C4",
+      "inStock": true
+    },
+    {
+      "id": "p_white_fish_keychain",
+      "name": "White Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "Snowy white crochet fish with a sweet pink tail. A perfect little gift.",
+      "photo": "/uploads/white-fish.jpg",
+      "colorway": "#F1E9DF",
+      "inStock": true
+    },
+    {
+      "id": "p_soft_pink_fish_keychain",
+      "name": "Soft Pink Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "Another pretty pink fish, hand-crocheted and clip-ready.",
+      "photo": "/uploads/pink-fish-2.jpg",
+      "colorway": "#EBB9C6",
+      "inStock": true
+    },
+    {
+      "id": "p_rose_fish_keychain",
+      "name": "Rose Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A dusty-rose crochet fish with a tiny bead eye.",
+      "photo": "/uploads/rose-fish.jpg",
+      "colorway": "#C76B7A",
+      "inStock": true
+    },
+    {
+      "id": "p_sandy_fish_keychain",
+      "name": "Sandy Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "Warm sandy-tan fish with a caramel tail, soft to the touch.",
+      "photo": "/uploads/tan-fish.jpg",
+      "colorway": "#C9A878",
+      "inStock": true
+    },
+    {
+      "id": "p_orange_fish_keychain",
+      "name": "Orange Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A cheerful marigold-orange crochet fish keychain.",
+      "photo": "/uploads/orange-fish.jpg",
+      "colorway": "#E07B2E",
+      "inStock": true
+    },
+    {
+      "id": "p_caramel_fish_keychain",
+      "name": "Caramel Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A cozy caramel-brown fish, hand-crocheted and clip-on.",
+      "photo": "/uploads/caramel-fish.jpg",
+      "colorway": "#B07A4E",
+      "inStock": true
+    },
+    {
+      "id": "p_yellow_fish_keychain",
+      "name": "Yellow Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A sunny yellow fish with a googly eye and lots of personality.",
+      "photo": "/uploads/yellow-fish.jpg",
+      "colorway": "#E8B22E",
+      "inStock": true
+    },
+    {
+      "id": "p_red_fish_keychain",
+      "name": "Red Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A bold cherry-red crochet fish keychain.",
+      "photo": "/uploads/red-fish.jpg",
+      "colorway": "#B83A36",
+      "inStock": true
+    },
+    {
+      "id": "p_green_fish_keychain",
+      "name": "Green Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A fresh lime-green fish with a little bead eye.",
+      "photo": "/uploads/green-fish.jpg",
+      "colorway": "#9BBF3D",
+      "inStock": true
+    },
+    {
+      "id": "p_rust_fish_keychain",
+      "name": "Rust Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A deep rust-orange fish keychain, warm and autumnal.",
+      "photo": "/uploads/rust-fish.jpg",
+      "colorway": "#C2541F",
+      "inStock": true
+    },
+    {
+      "id": "p_rainbow_fish_keychain",
+      "name": "Rainbow Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A playful red-yellow-blue fish — no two are exactly alike.",
+      "photo": "/uploads/rainbow-fish.jpg",
+      "colorway": "#E0A53F",
+      "inStock": true
+    },
+    {
+      "id": "p_blue_fish_keychain",
+      "name": "Blue Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "An ocean-blue crochet fish keychain, soft and squishy.",
+      "photo": "/uploads/blue-fish.jpg",
+      "colorway": "#2F6FB0",
+      "inStock": true
+    },
+    {
+      "id": "p_unicorn_trinket_basket",
+      "name": "Unicorn Trinket Basket",
+      "kind": "Basket",
+      "category": "Gifts",
+      "price": 30,
+      "description": "A hand-crocheted unicorn cuddling a little basket — for rings, hair ties, or desk bits.",
+      "photo": "/uploads/unicorn-basket.jpg",
+      "colorway": "#efe6da",
+      "inStock": true
+    },
+    {
+      "id": "p_pig_trinket_basket",
+      "name": "Pig Trinket Basket",
+      "kind": "Basket",
+      "category": "Cuddle Baskets",
+      "price": 25,
+      "description": "A hand-crocheted peach piglet cradling a speckled basket — sweet storage for rings, hair ties, or trinkets.",
+      "photo": "/uploads/pig-basket.jpg",
+      "colorway": "#F2B79E",
+      "inStock": true
+    },
+    {
+      "id": "p_tiger_cub_trinket_basket",
+      "name": "Tiger Cub Trinket Basket",
+      "kind": "Basket",
+      "category": "Cuddle Baskets",
+      "price": 25,
+      "description": "A cheerful tan tiger cub holding a green-and-cream basket. A handmade catch-all for small treasures.",
+      "photo": "/uploads/tiger-cub-basket.jpg",
+      "colorway": "#E8B23A",
+      "inStock": true
+    },
+    {
+      "id": "p_puppy_trinket_basket",
+      "name": "Puppy Trinket Basket",
+      "kind": "Basket",
+      "category": "Cuddle Baskets",
+      "price": 25,
+      "description": "A friendly white puppy with floppy black ears, holding a berry-striped basket for your odds and ends.",
+      "photo": "/uploads/dog-basket.jpg",
+      "colorway": "#F2EFE9",
+      "inStock": true
+    },
+    {
+      "id": "p_teddy_bear_trinket_basket",
+      "name": "Teddy Bear Trinket Basket",
+      "kind": "Basket",
+      "category": "Cuddle Baskets",
+      "price": 25,
+      "description": "A classic brown teddy bear cuddling a soft cream basket — perfect on a desk or shelf for little keepsakes.",
+      "photo": "/uploads/bear-basket.jpg",
+      "colorway": "#B08A5E",
+      "inStock": true
+    },
+    {
+      "id": "p_fox_trinket_basket",
+      "name": "Fox Trinket Basket",
+      "kind": "Basket",
+      "category": "Cuddle Baskets",
+      "price": 25,
+      "description": "A bright crochet fox holding a speckled cream basket. A charming home for jewelry and small things.",
+      "photo": "/uploads/fox-basket.jpg",
+      "colorway": "#E14B2E",
+      "inStock": true
+    },
+    {
+      "id": "p_bunny_trinket_basket",
+      "name": "Bunny Trinket Basket",
+      "kind": "Basket",
+      "category": "Cuddle Baskets",
+      "price": 25,
+      "description": "A pink bunny with tall floppy ears holding a cocoa-brown basket — a cute keeper for rings and trinkets.",
+      "photo": "/uploads/bunny-basket.jpg",
+      "colorway": "#F2A9C0",
+      "inStock": true
+    },
+    {
+      "id": "p_sheep_trinket_basket",
+      "name": "Sheep Trinket Basket",
+      "kind": "Basket",
+      "category": "Cuddle Baskets",
+      "price": 25,
+      "description": "A dreamy blue sheep with a fluffy golden top, holding a cream basket for your little bits and bobs.",
+      "photo": "/uploads/sheep-basket.jpg",
+      "colorway": "#9FB9DE",
+      "inStock": true
+    },
+    {
+      "id": "p_yellow_bear_trinket_basket",
+      "name": "Yellow Bear Trinket Basket",
+      "kind": "Basket",
+      "category": "Gifts",
+      "price": 35,
+      "description": "A honey-yellow bear holding a cherry-red basket — a sweet trinket keeper for any shelf.",
+      "photo": "/uploads/yellow-bear-basket.jpg",
+      "colorway": "#f2d24e",
+      "inStock": true
+    },
+    {
+      "id": "p_orange_tiger_trinket_basket",
+      "name": "Orange Tiger Trinket Basket",
+      "kind": "Basket",
+      "category": "Gifts",
+      "price": 35,
+      "description": "A bouncy orange tiger holding a cream basket. Hand-crocheted storage for rings and odds and ends.",
+      "photo": "/uploads/orange-tiger-basket.jpg",
+      "colorway": "#d2762a",
+      "inStock": true
+    },
+    {
+      "id": "p_cream_bear_trinket_basket",
+      "name": "Cream Bear Trinket Basket",
+      "kind": "Basket",
+      "category": "Gifts",
+      "price": 35,
+      "description": "A soft cream bear with lilac ears, holding a lavender basket — lovely desk or vanity storage.",
+      "photo": "/uploads/cream-bear-basket.jpg",
+      "colorway": "#efe6da",
+      "inStock": true
+    }
+  ],
+  "orders": [
+    {
+      "id": "o_mqri1p62ooy5",
+      "number": "LP-351762",
+      "createdAt": 1782270849962,
+      "customer": {
+        "name": "Tuguldur Zorigtbaatar",
+        "email": "zorigtugu@gmail.com"
+      },
+      "address": {
+        "line1": "5550 columbia pike apt 836",
+        "city": "Arlington",
+        "state": "VA",
+        "zip": "22204"
+      },
+      "items": [
+        {
+          "id": "p_orange_tiger_trinket_basket",
+          "name": "Orange Tiger Trinket Basket",
+          "price": 35,
+          "qty": 1,
+          "lineTotal": 35
+        }
+      ],
+      "subtotal": 35,
+      "status": "New"
+    }
+  ],
+  "customRequests": [],
+  "settings": {
+    "instagram": "",
+    "email": "",
+    "customOrdersOpen": true,
+    "customOrdersNote": "Tell us what you'd love and we'll send a quote. Most custom pieces take 2–4 weeks."
+  }
+}
