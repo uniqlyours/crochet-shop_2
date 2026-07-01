@@ -100,7 +100,7 @@ function renderCart(){
         <div class="qty"><button data-q="${id}|-1" aria-label="Decrease">−</button><span>${q}</span><button data-q="${id}|1" aria-label="Increase">+</button></div>
         <button class="li-remove" data-rm="${id}">Remove</button>
       </div>
-      <div style="font-family:'Fraunces';font-weight:600">${money(p.price*q)}</div>
+      <div style="font-family:var(--font-display);font-weight:700">${money(p.price*q)}</div>
     </div>`;}).join('');
   $('#drawerFoot').innerHTML = `<div class="subtotal"><span>Subtotal</span><span>${money(subtotal())}</span></div>
     <div class="ship-note">Shipping &amp; any custom-size tweaks confirmed after you order.</div>
@@ -157,7 +157,8 @@ function closeDrawer(){ $('#drawer').classList.remove('open'); $('#overlay').cla
 document.addEventListener('click', e=>{
   const t=e.target;
   if(t.dataset.add) addToCart(t.dataset.add);
-  if(t.dataset.cat){ activeCat=t.dataset.cat; renderFilters(); renderGrid(); }
+  const catEl = t.closest && t.closest('[data-cat]');
+  if(catEl){ activeCat=catEl.dataset.cat; renderFilters(); renderGrid(); }
   if(t.dataset.q){ const [id,d]=t.dataset.q.split('|'); setQty(id,+d); }
   if(t.dataset.rm) removeItem(t.dataset.rm);
   if(t.id==='openCart') openDrawer();
