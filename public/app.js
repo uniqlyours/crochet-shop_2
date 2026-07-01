@@ -48,7 +48,7 @@ async function loadProducts(){
     const r = await fetch('/api/products');
     PRODUCTS = await r.json();
   }catch{ PRODUCTS = []; }
-  $('#designCount').textContent = PRODUCTS.length || '0';
+  const dc = $('#designCount'); if(dc) dc.textContent = PRODUCTS.length || '0';
   renderFilters(); renderGrid();
 }
 function renderFilters(){
