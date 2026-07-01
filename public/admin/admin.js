@@ -27,7 +27,7 @@ async function logout(){
 function sidebar(active){
   const item = (href,label,key)=>`<a href="${href}" class="${key===active?'active':''}">${label}</a>`;
   return `<aside class="side">
-    <div class="logo">Loop &amp; Petal<span>Shop admin</span></div>
+    <div class="logo">UNIQLYours<span>Shop admin</span></div>
     ${item('/admin/index.html','Dashboard','home')}
     ${item('/admin/products.html','Products','products')}
     ${item('/admin/import.html','Import (Excel)','import')}

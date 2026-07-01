@@ -1,4 +1,4 @@
-# Loop &amp; Petal — handmade crochet shop
+# UNIQLYours — handmade crochet shop
 
 A cozy online shop with a storefront, a shopping basket, checkout, and a private
 admin area where you can add products (with photos and prices), see orders with
@@ -124,14 +124,14 @@ Facebook, etc.), a favicon, structured data that tells Google it's a store, and 
 Two things still have to happen for it to actually appear in Google — and both need the
 site to be **live on a public web address** first (Google can't see `localhost`):
 
-1. **Set your real domain.** In `.env`, set `SITE_URL=https://your-real-domain.com`, and
-   replace the `your-domain.com` placeholders in `public/index.html` (the `canonical`,
-   `og:url`, and `og:image` tags). This makes the sitemap and previews point to the right place.
+1. **Domain is already set.** The site is wired to `uniqlyours.com` — `SITE_URL` defaults
+   to `https://uniqlyours.com`, and the `canonical`, `og:url`, and `og:image` tags in
+   `public/index.html` already point there. (If you ever change domains, update those.)
 2. **Tell Google about it.** Once hosted, add your site to **Google Search Console**
-   (free), and submit `https://your-domain.com/sitemap.xml`. Indexing then takes anywhere
+   (free), and submit `https://uniqlyours.com/sitemap.xml`. Indexing then takes anywhere
    from a few days to a few weeks.
 
-I can walk you through both when you deploy.
+See **DEPLOY.md** for the full step-by-step on deploying to Railway and pointing the domain.
 
 ---
 

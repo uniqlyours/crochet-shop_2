@@ -1,0 +1,8 @@
+node_modules/
+.env
+.DS_Store
+
+# NOTE: data/store.json and public/uploads ARE committed on purpose — they ship the
+# current catalog + product photos so a fresh deploy isn't empty. Once the site is
+# live, the admin panel (writing to the Railway volume) is the real source of truth;
+# the committed copies only seed a brand-new/empty volume on first boot.

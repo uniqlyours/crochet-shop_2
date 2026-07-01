@@ -5,10 +5,14 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import * as db from './lib/store.js';
 import { checkPassword, issueCookie, clearCookie, isAuthed, requireAdmin } from './lib/auth.js';
+import { sendOrderEmails, sendCustomRequestEmail } from './lib/mailer.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
+// Railway (and most hosts) terminate HTTPS at a proxy in front of the app.
+// Trusting it lets the admin login cookie be marked Secure correctly over HTTPS.
+app.set('trust proxy', 1);
 
 // ---------- middleware ----------
 app.use(express.json({ limit: '4mb' }));
@@ -24,7 +28,9 @@ app.use((req, _res, next) => {
 });
 
 // ---------- photo uploads ----------
-const UPLOAD_DIR = path.join(__dirname, 'public', 'uploads');
+// On Railway, set UPLOADS_DIR to a folder on the mounted volume (e.g. /data/uploads)
+// so customer/product photos survive restarts. Falls back to public/uploads locally.
+const UPLOAD_DIR = process.env.UPLOADS_DIR || path.join(__dirname, 'public', 'uploads');
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 const upload = multer({
   storage: multer.diskStorage({
@@ -71,6 +77,7 @@ app.post('/api/orders', (req, res) => {
     return res.status(400).json({ error: 'Your basket is empty.' });
   }
   const order = db.createOrder({ customer, address, items });
+  sendOrderEmails(order); // fire-and-forget; no-op unless SMTP is configured
   res.json({ number: order.number, subtotal: order.subtotal });
 });
 
@@ -94,7 +101,8 @@ app.post('/api/custom-requests', (req, res) => {
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Please add your name, email and a short description.' });
   }
-  db.addCustomRequest({ name, email, message, budget });
+  const reqItem = db.addCustomRequest({ name, email, message, budget });
+  sendCustomRequestEmail(reqItem); // fire-and-forget; no-op unless SMTP is configured
   res.json({ ok: true });
 });
 
@@ -105,7 +113,7 @@ app.post('/api/admin/login', (req, res) => {
   if (!checkPassword(req.body?.password)) {
     return res.status(401).json({ error: 'Wrong password.' });
   }
-  issueCookie(res);
+  issueCookie(res, req);
   res.json({ ok: true });
 });
 app.post('/api/admin/logout', (req, res) => { clearCookie(res); res.json({ ok: true }); });
@@ -182,8 +190,8 @@ app.post('/api/admin/custom-requests/:id/status', requireAdmin, (req, res) => {
 });
 
 // ---------- SEO: robots.txt + sitemap.xml ----------
-// Set SITE_URL in .env to your real domain once hosted (e.g. https://loopandpetal.com)
-const SITE_URL = (process.env.SITE_URL || 'https://your-domain.com').replace(/\/$/, '');
+// Set SITE_URL in .env to your real domain once hosted (e.g. https://uniqlyours.com)
+const SITE_URL = (process.env.SITE_URL || 'https://uniqlyours.com').replace(/\/$/, '');
 app.get('/robots.txt', (_req, res) => {
   res.type('text/plain').send(`User-agent: *\nAllow: /\nDisallow: /admin\n\nSitemap: ${SITE_URL}/sitemap.xml\n`);
 });
@@ -198,10 +206,13 @@ app.get('/sitemap.xml', (_req, res) => {
 });
 
 // ---------- static files ----------
+// Serve uploaded photos from the (possibly volume-backed) uploads dir first, then
+// fall back to anything bundled under public/ (incl. the seed product images).
+app.use('/uploads', express.static(UPLOAD_DIR));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(PORT, () => {
-  console.log(`\n  🧶 Loop & Petal is running`);
+  console.log(`\n  🧶 UNIQLYours is running`);
   console.log(`  Storefront → http://localhost:${PORT}`);
   console.log(`  Admin      → http://localhost:${PORT}/admin\n`);
 });
