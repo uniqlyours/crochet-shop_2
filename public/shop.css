@@ -32,6 +32,9 @@ header{position:sticky;top:0;z-index:40;background:rgba(252,253,252,.82);backdro
 .logo-text b i{font-family:'Satisfy',cursive;font-style:normal;font-weight:400;font-size:1.15em;color:var(--sage)}
 .logo-text small{font-size:.8rem;letter-spacing:.04em;color:var(--ink-soft);font-weight:600;margin-top:2px}
 .logo-text small .by-name{font-family:'Satisfy',cursive;font-weight:400;font-size:1.3em;color:var(--sage-deep)}
+.thumb-link{display:block;text-decoration:none;color:inherit}
+.title-link{text-decoration:none;color:inherit}
+.title-link:hover{color:var(--sage-deep)}
 nav{display:flex;align-items:center;gap:26px}
 nav a{text-decoration:none;font-weight:700;font-size:.94rem;color:var(--ink-soft);transition:color .2s}
 nav a:hover{color:var(--sage-deep)}

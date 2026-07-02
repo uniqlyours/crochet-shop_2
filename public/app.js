@@ -63,13 +63,15 @@ function renderGrid(){
   const list = activeCat==='All' ? PRODUCTS : PRODUCTS.filter(p=>p.category===activeCat);
   $('#grid').innerHTML = list.map(p=>`
     <article class="card">
-      <div class="thumb" style="${thumbStyle(p)}">
-        <span class="tag">${money(p.price)}</span>
-        ${thumbInner(p)}
-      </div>
+      <a class="thumb-link" href="/product/${encodeURIComponent(p.id)}" aria-label="${esc(p.name)}">
+        <div class="thumb" style="${thumbStyle(p)}">
+          <span class="tag">${money(p.price)}</span>
+          ${thumbInner(p)}
+        </div>
+      </a>
       <div class="card-body">
         <span class="kind">${esc(p.kind||'Handmade')}</span>
-        <h3>${esc(p.name)}</h3>
+        <h3><a class="title-link" href="/product/${encodeURIComponent(p.id)}">${esc(p.name)}</a></h3>
         <p>${esc(p.description||'')}</p>
         <button class="add" data-add="${p.id}">Add to basket</button>
       </div>
@@ -172,8 +174,19 @@ async function payWithCard(){
   }catch(e){ alert(e.message); btn.disabled=false; btn.textContent='Pay with card'; }
 }
 // returning from Stripe: ?session_id=... on success, ?canceled=1 if they backed out
+// also: ?add=PRODUCT_ID from the SEO product pages' "Add to basket" button
 async function handleStripeReturn(){
   const q = new URLSearchParams(location.search);
+  if(q.get('add')){
+    const id = q.get('add');
+    const tryAdd = () => {
+      if(PRODUCTS.length){ if(findP(id)) addToCart(id); }
+      else setTimeout(tryAdd, 300);
+    };
+    tryAdd();
+    history.replaceState(null,'',location.pathname + location.hash);
+    return;
+  }
   if(q.get('session_id')){
     try{
       const r = await fetch('/api/checkout/confirm?session_id='+encodeURIComponent(q.get('session_id')));

@@ -7,6 +7,7 @@ import * as db from './lib/store.js';
 import { checkPassword, issueCookie, clearCookie, isAuthed, requireAdmin } from './lib/auth.js';
 import { sendOrderEmails, sendCustomRequestEmail } from './lib/mailer.js';
 import { stripeEnabled, createCheckoutSession, getCheckoutSession, verifyWebhookSignature } from './lib/stripe.js';
+import { instagramEnabled, maybeAutoPost } from './lib/instagram.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -265,12 +266,95 @@ app.get('/robots.txt', (_req, res) => {
 });
 app.get('/sitemap.xml', (_req, res) => {
   const today = new Date().toISOString().slice(0, 10);
+  const products = db.getProducts({ onlyInStock: true });
+  const productUrls = products.map(p =>
+    `  <url><loc>${SITE_URL}/product/${encodeURIComponent(p.id)}</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`
+  ).join('\n');
   res.type('application/xml').send(
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     `  <url><loc>${SITE_URL}/</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>\n` +
-    `</urlset>\n`
+    productUrls + `\n</urlset>\n`
   );
+});
+
+// ---------- SEO: server-rendered product pages ----------
+const escHtml = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+app.get('/product/:id', (req, res) => {
+  const p = db.getProducts({ onlyInStock: true }).find(x => x.id === req.params.id);
+  if (!p) return res.status(404).redirect('/#shop');
+  const img = p.photo ? SITE_URL + p.photo : SITE_URL + '/og-image.png';
+  const url = `${SITE_URL}/product/${encodeURIComponent(p.id)}`;
+  const desc = p.description || `Hand-crocheted ${p.name} by UNIQLYours.`;
+  const ld = {
+    '@context': 'https://schema.org', '@type': 'Product',
+    name: p.name, description: desc, image: [img], url,
+    brand: { '@type': 'Brand', name: 'UNIQLYours' },
+    offers: {
+      '@type': 'Offer', url, priceCurrency: 'USD', price: Number(p.price).toFixed(2),
+      availability: 'https://schema.org/InStock',
+      seller: { '@type': 'Organization', name: 'UNIQLYours' }
+    }
+  };
+  res.send(`<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escHtml(p.name)} — UNIQLYours</title>
+<meta name="description" content="${escHtml(desc)}">
+<link rel="canonical" href="${url}">
+<meta property="og:type" content="product"><meta property="og:site_name" content="UNIQLYours">
+<meta property="og:title" content="${escHtml(p.name)} — UNIQLYours">
+<meta property="og:description" content="${escHtml(desc)}">
+<meta property="og:url" content="${url}"><meta property="og:image" content="${img}">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&family=Merienda:wght@700&family=Satisfy&display=swap" rel="stylesheet">
+<script type="application/ld+json">${JSON.stringify(ld)}</script>
+<style>
+  body{margin:0;font-family:Nunito,sans-serif;background:#FCFDFC;color:#333A33}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 20px}
+  a.brand{text-decoration:none;color:#333A33;font-family:Merienda,cursive;font-weight:700;font-size:1.5rem}
+  a.brand i{font-family:Satisfy,cursive;font-style:normal;color:#7C9A73;font-size:1.15em}
+  .prod{display:grid;grid-template-columns:1fr 1fr;gap:34px;margin-top:26px;align-items:start}
+  .prod img{width:100%;border-radius:18px;border:1px solid #E7ECE6}
+  h1{font-family:Quicksand,sans-serif;margin:0 0 10px;font-size:1.9rem}
+  .price{font-size:1.4rem;font-weight:700;color:#5E7D55;margin:8px 0 14px}
+  .kind{letter-spacing:.18em;text-transform:uppercase;font-size:.72rem;color:#7C9A73;font-weight:700}
+  p.desc{line-height:1.65;color:#5A625A}
+  .btn{display:inline-block;background:#7C9A73;color:#fff;text-decoration:none;font-weight:700;
+       padding:13px 26px;border-radius:999px;margin-top:10px}
+  .back{display:inline-block;margin-top:18px;color:#7C9A73;text-decoration:none;font-weight:700}
+  @media(max-width:700px){.prod{grid-template-columns:1fr}}
+</style></head><body><div class="wrap">
+<a class="brand" href="/">UNIQLY<i>ours</i></a>
+<div class="prod">
+  <img src="${escHtml(p.photo || '/og-image.png')}" alt="${escHtml(p.name)}">
+  <div>
+    <span class="kind">${escHtml(p.kind || 'Handmade')} · ${escHtml(p.category || '')}</span>
+    <h1>${escHtml(p.name)}</h1>
+    <div class="price">$${Number(p.price).toFixed(2)}</div>
+    <p class="desc">${escHtml(desc)}</p>
+    <a class="btn" href="/?add=${encodeURIComponent(p.id)}#shop">Add to basket</a><br>
+    <a class="back" href="/#shop">← Browse everything</a>
+  </div>
+</div></div></body></html>`);
+});
+
+// Homepage: inject an ItemList of products (structured data) into the static HTML.
+const INDEX_HTML = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+app.get('/', (_req, res) => {
+  const products = db.getProducts({ onlyInStock: true });
+  const ld = {
+    '@context': 'https://schema.org', '@type': 'ItemList',
+    itemListElement: products.map((p, i) => ({
+      '@type': 'ListItem', position: i + 1,
+      url: `${SITE_URL}/product/${encodeURIComponent(p.id)}`, name: p.name
+    }))
+  };
+  res.type('html').send(INDEX_HTML.replace('</head>',
+    `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n</head>`));
 });
 
 // ---------- static files ----------
@@ -278,6 +362,16 @@ app.get('/sitemap.xml', (_req, res) => {
 // fall back to anything bundled under public/ (incl. the seed product images).
 app.use('/uploads', express.static(UPLOAD_DIR));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Instagram auto-posting: checks hourly, posts when the interval has elapsed.
+// No-op until IG_ACCESS_TOKEN + IG_USER_ID are set in the environment.
+if (instagramEnabled()) {
+  console.log('  📸 Instagram auto-posting enabled');
+  setTimeout(maybeAutoPost, 60 * 1000);              // first check a minute after boot
+  setInterval(maybeAutoPost, 60 * 60 * 1000);        // then hourly
+} else {
+  console.log('  📸 Instagram auto-posting off (set IG_ACCESS_TOKEN + IG_USER_ID)');
+}
 
 app.listen(PORT, () => {
   console.log(`\n  🧶 UNIQLYours is running`);
