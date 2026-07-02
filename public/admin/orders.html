@@ -35,14 +35,17 @@ async function render(){
     return;
   }
   panel.innerHTML = `<table>
-    <thead><tr><th>Order</th><th>Customer</th><th>Ship to</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+    <thead><tr><th>Order</th><th>Customer</th><th>Ship to</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th></tr></thead>
     <tbody>${orders.map(o=>`
       <tr>
         <td><b>${esc(o.number)}</b><div class="addr">${new Date(o.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div></td>
         <td>${esc(o.customer.name)}<div class="addr">${esc(o.customer.email)}</div></td>
         <td class="addr">${esc(o.address.line1)}<br>${esc(o.address.city)}${o.address.city&&o.address.state?', ':''}${esc(o.address.state)} ${esc(o.address.zip)}</td>
         <td>${o.items.map(i=>`${i.qty}× ${esc(i.name)}`).join('<br>')}</td>
-        <td><b>${money(o.subtotal)}</b></td>
+        <td><b>${money(o.total ?? o.subtotal)}</b>${o.shipping?`<div class="addr">incl. ${money(o.shipping)} ship</div>`:''}</td>
+        <td>${o.paymentMethod==='card'
+              ? (o.paid ? '<span style="color:#2e7d32;font-weight:700">● Paid (card)</span>' : '<span style="color:#c62828;font-weight:700">○ Card — not completed</span>')
+              : '<span style="color:#9a7b2f;font-weight:700">◐ Pay later</span>'}</td>
         <td>
           <select class="status-select" data-id="${o.id}">
             ${['New','Making','Shipped'].map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}

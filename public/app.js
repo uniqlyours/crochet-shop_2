@@ -36,6 +36,9 @@ function thumbStyle(p){
 // ---------- state ----------
 let PRODUCTS = [];
 let cart = {};
+// keep the basket across page loads (and the round-trip to Stripe)
+try{ cart = JSON.parse(localStorage.getItem('uy_cart')||'{}') || {}; }catch{ cart = {}; }
+function saveCart(){ try{ localStorage.setItem('uy_cart', JSON.stringify(cart)); }catch{} }
 let view = 'cart';
 let activeCat = 'All';
 const $ = s => document.querySelector(s);
@@ -77,7 +80,8 @@ function renderGrid(){
 const findP = id => PRODUCTS.find(p=>p.id===id);
 const count = () => Object.values(cart).reduce((a,b)=>a+b,0);
 const subtotal = () => Object.entries(cart).reduce((s,[id,q])=>{const p=findP(id);return s+(p?p.price*q:0);},0);
-function updateCount(){ $('#cartCount').textContent = count(); }
+function updateCount(){ $('#cartCount').textContent = count(); saveCart(); }
+const shipFlat = () => Number(SETTINGS.shippingFlat) || 0;
 function addToCart(id){
   cart[id]=(cart[id]||0)+1; updateCount();
   const b=document.querySelector(`[data-add="${id}"]`);
@@ -103,7 +107,7 @@ function renderCart(){
       <div style="font-family:var(--font-display);font-weight:700">${money(p.price*q)}</div>
     </div>`;}).join('');
   $('#drawerFoot').innerHTML = `<div class="subtotal"><span>Subtotal</span><span>${money(subtotal())}</span></div>
-    <div class="ship-note">Shipping &amp; any custom-size tweaks confirmed after you order.</div>
+    <div class="ship-note">${shipFlat()>0 ? `Flat shipping ${money(shipFlat())} added at checkout.` : 'Free shipping!'}</div>
     <button class="checkout-btn" id="toCheckout">Checkout</button>`;
 }
 function renderCheckout(){
@@ -117,13 +121,17 @@ function renderCheckout(){
     <div class="field"><label>Address</label><input id="f_addr" placeholder="123 Cozy Lane"></div>
     <div class="row2"><div class="field"><label>City</label><input id="f_city" placeholder="Baltimore"></div><div class="field"><label>State</label><input id="f_state" placeholder="MD"></div></div>
     <div class="field"><label>ZIP</label><input id="f_zip" placeholder="21201"></div>
-    <h4>Payment <span class="demo-pill">Demo only</span></h4>
-    <div class="field"><label>Card number</label><input id="f_card" placeholder="4242 4242 4242 4242" inputmode="numeric"></div>
-    <div class="row2"><div class="field"><label>Expiry</label><input placeholder="MM / YY"></div><div class="field"><label>CVC</label><input placeholder="123" inputmode="numeric"></div></div>
   </div>`;
-  $('#drawerFoot').innerHTML = `<div class="subtotal"><span>Total</span><span>${money(subtotal())}</span></div>
-    <div class="ship-note">This is a preview — no real card is charged. Connect Stripe to take live payments (see README).</div>
-    <button class="checkout-btn" id="placeOrder">Place order</button>`;
+  const ship = shipFlat(), total = subtotal() + ship;
+  $('#drawerFoot').innerHTML = `
+    <div class="subtotal"><span>Subtotal</span><span>${money(subtotal())}</span></div>
+    <div class="subtotal"><span>Shipping</span><span>${ship>0?money(ship):'Free'}</span></div>
+    <div class="subtotal"><span><b>Total</b></span><span><b>${money(total)}</b></span></div>
+    ${SETTINGS.cardPayments ? `<button class="checkout-btn" id="payCard">Pay ${money(total)} with card</button>
+    <div class="ship-note" style="text-align:center;margin:6px 0 2px">Secure payment via Stripe — or</div>
+    <button class="checkout-btn" id="placeOrder" style="background:var(--ink)">Order now, arrange payment later</button>`
+    : `<button class="checkout-btn" id="placeOrder">Place order</button>
+    <div class="ship-note">We'll email you to arrange payment.</div>`}`;
 }
 function renderDone(num){
   $('#drawerTitle').textContent='Thank you!';
@@ -134,21 +142,50 @@ function renderDone(num){
   cart={}; updateCount();
 }
 
-async function placeOrder(){
+function checkoutPayload(){
   const name=$('#f_name').value.trim(), email=$('#f_email').value.trim(), line1=$('#f_addr').value.trim();
-  if(!name||!email||!line1){ alert('Please add your name, email and address to place the order.'); return; }
-  const payload = {
+  if(!name||!email||!line1){ alert('Please add your name, email and address to place the order.'); return null; }
+  return {
     customer:{ name, email },
     address:{ line1, city:$('#f_city').value.trim(), state:$('#f_state').value.trim(), zip:$('#f_zip').value.trim() },
     items: Object.entries(cart).map(([id,qty])=>({id,qty}))
   };
+}
+async function placeOrder(){
+  const payload = checkoutPayload(); if(!payload) return;
   const btn=$('#placeOrder'); btn.disabled=true; btn.textContent='Placing order…';
   try{
     const r=await fetch('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const data=await r.json();
     if(!r.ok) throw new Error(data.error||'Something went wrong');
     view='done'; renderDone(data.number);
-  }catch(e){ alert(e.message); btn.disabled=false; btn.textContent='Place order'; }
+  }catch(e){ alert(e.message); btn.disabled=false; btn.textContent='Order now, arrange payment later'; }
+}
+async function payWithCard(){
+  const payload = checkoutPayload(); if(!payload) return;
+  const btn=$('#payCard'); btn.disabled=true; btn.textContent='Taking you to secure payment…';
+  try{
+    const r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.error||'Something went wrong');
+    window.location.href = data.url; // Stripe-hosted checkout page
+  }catch(e){ alert(e.message); btn.disabled=false; btn.textContent='Pay with card'; }
+}
+// returning from Stripe: ?session_id=... on success, ?canceled=1 if they backed out
+async function handleStripeReturn(){
+  const q = new URLSearchParams(location.search);
+  if(q.get('session_id')){
+    try{
+      const r = await fetch('/api/checkout/confirm?session_id='+encodeURIComponent(q.get('session_id')));
+      const data = await r.json();
+      if(r.ok){ cart={}; updateCount(); view='done'; renderDone(data.number); $('#drawer').classList.add('open'); $('#overlay').classList.add('open'); }
+      else alert(data.error||'We could not confirm the payment — please contact us.');
+    }catch{ alert('We could not confirm the payment — please contact us.'); }
+    history.replaceState(null,'',location.pathname);
+  } else if(q.get('canceled')){
+    openDrawer(); // basket is still saved
+    history.replaceState(null,'',location.pathname);
+  }
 }
 
 function openDrawer(){ view='cart'; renderDrawer(); $('#drawer').classList.add('open'); $('#overlay').classList.add('open'); }
@@ -167,6 +204,7 @@ document.addEventListener('click', e=>{
   if(t.id==='backToCart'){ view='cart'; renderDrawer(); }
   if(t.id==='keepShopping'){ view='cart'; renderDrawer(); closeDrawer(); }
   if(t.id==='placeOrder') placeOrder();
+  if(t.id==='payCard') payWithCard();
 });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDrawer(); });
 
@@ -230,4 +268,4 @@ function card_thanks(name, email){
     <p style="color:var(--ink-soft);margin-top:10px">Thanks ${esc(name)} — we'll reply to ${esc(email)} with ideas and a quote soon.</p></div>`;
 }
 
-loadProducts(); loadSettings(); updateCount();
+loadProducts(); loadSettings().then(handleStripeReturn); updateCount();

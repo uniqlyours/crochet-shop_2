@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import * as db from './lib/store.js';
 import { checkPassword, issueCookie, clearCookie, isAuthed, requireAdmin } from './lib/auth.js';
 import { sendOrderEmails, sendCustomRequestEmail } from './lib/mailer.js';
+import { stripeEnabled, createCheckoutSession, getCheckoutSession, verifyWebhookSignature } from './lib/stripe.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -15,6 +16,28 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 // ---------- middleware ----------
+// Stripe webhook needs the RAW body for signature verification, so it is
+// registered before the JSON parser.
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!secret) return res.status(400).json({ error: 'Webhook not configured' });
+  const raw = req.body.toString('utf8');
+  if (!verifyWebhookSignature(raw, req.headers['stripe-signature'], secret)) {
+    return res.status(400).json({ error: 'Bad signature' });
+  }
+  let event;
+  try { event = JSON.parse(raw); } catch { return res.status(400).json({ error: 'Bad payload' }); }
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data?.object;
+    const orderId = session?.metadata?.order_id;
+    if (orderId && session?.payment_status === 'paid') {
+      const r = db.markOrderPaid(orderId);
+      if (r && !r.wasAlreadyPaid) sendOrderEmails(r.order); // first confirmation only
+    }
+  }
+  res.json({ received: true });
+});
+
 app.use(express.json({ limit: '4mb' }));
 // tiny cookie reader (avoids an extra dependency)
 app.use((req, _res, next) => {
@@ -76,9 +99,52 @@ app.post('/api/orders', (req, res) => {
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'Your basket is empty.' });
   }
-  const order = db.createOrder({ customer, address, items });
+  const order = db.createOrder({ customer, address, items, paymentMethod: 'pay_later' });
   sendOrderEmails(order); // fire-and-forget; no-op unless SMTP is configured
-  res.json({ number: order.number, subtotal: order.subtotal });
+  res.json({ number: order.number, subtotal: order.subtotal, shipping: order.shipping, total: order.total });
+});
+
+// ---------- Stripe Checkout (card payments) ----------
+// Creates the order (unpaid) then redirects the customer to Stripe's hosted page.
+app.post('/api/checkout', async (req, res) => {
+  if (!stripeEnabled()) return res.status(400).json({ error: 'Card payments are not available right now.' });
+  const { customer, address, items } = req.body || {};
+  if (!customer?.name || !customer?.email || !address?.line1) {
+    return res.status(400).json({ error: 'Name, email and address are required.' });
+  }
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Your basket is empty.' });
+  }
+  try {
+    const order = db.createOrder({ customer, address, items, paymentMethod: 'card' });
+    const siteUrl = process.env.SITE_URL || `${req.protocol}://${req.get('host')}`;
+    const session = await createCheckoutSession(order, siteUrl.replace(/\/$/, ''));
+    db.attachStripeSession(order.id, session.id);
+    res.json({ url: session.url });
+  } catch (e) {
+    console.error('checkout:', e.message);
+    res.status(502).json({ error: 'Could not start the card payment. Please try again.' });
+  }
+});
+
+// Fallback confirmation when the customer returns from Stripe (webhook is primary).
+app.get('/api/checkout/confirm', async (req, res) => {
+  if (!stripeEnabled()) return res.status(400).json({ error: 'Not available' });
+  const id = String(req.query.session_id || '');
+  if (!id) return res.status(400).json({ error: 'Missing session' });
+  try {
+    const session = await getCheckoutSession(id);
+    const orderId = session?.metadata?.order_id;
+    if (!orderId) return res.status(404).json({ error: 'Unknown session' });
+    if (session.payment_status !== 'paid') return res.status(402).json({ error: 'Payment not completed' });
+    const r = db.markOrderPaid(orderId);
+    if (!r) return res.status(404).json({ error: 'Order not found' });
+    if (!r.wasAlreadyPaid) sendOrderEmails(r.order);
+    res.json({ number: r.order.number });
+  } catch (e) {
+    console.error('confirm:', e.message);
+    res.status(502).json({ error: 'Could not confirm the payment.' });
+  }
 });
 
 // public, safe settings (Instagram link + custom-order availability)
@@ -88,7 +154,9 @@ app.get('/api/settings', (_req, res) => {
     instagram: s.instagram,
     email: s.email,
     customOrdersOpen: s.customOrdersOpen,
-    customOrdersNote: s.customOrdersNote
+    customOrdersNote: s.customOrdersNote,
+    shippingFlat: Number(s.shippingFlat) || 0,
+    cardPayments: stripeEnabled()
   });
 });
 

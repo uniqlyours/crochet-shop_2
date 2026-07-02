@@ -62,6 +62,15 @@
       </div>
     </div>
 
+    <div class="panel">
+      <h2>Shipping</h2>
+      <div class="field">
+        <label>Flat shipping charge ($)</label>
+        <input id="t_shipping" type="number" min="0" step="0.5" placeholder="5">
+        <div class="ig-hint">Added to every order at checkout. Set to 0 for free shipping.</div>
+      </div>
+    </div>
+
     <div class="save-row">
       <button class="btn" id="saveBtn">Save settings</button>
       <a class="btn ghost" href="/" target="_blank">Preview shop ↗</a>
@@ -86,6 +95,7 @@ function paintState(){
   $('t_note').value = s.customOrdersNote || '';
   $('t_instagram').value = s.instagram || '';
   $('t_email').value = s.email || '';
+  $('t_shipping').value = s.shippingFlat ?? 5;
   paintState();
   $('t_open').addEventListener('change', paintState);
 })();
@@ -98,7 +108,8 @@ $('saveBtn').addEventListener('click', async ()=>{
         customOrdersOpen: $('t_open').checked,
         customOrdersNote: $('t_note').value,
         instagram: $('t_instagram').value.trim(),
-        email: $('t_email').value.trim()
+        email: $('t_email').value.trim(),
+        shippingFlat: Number($('t_shipping').value) || 0
       })
     });
     toast('Settings saved');
