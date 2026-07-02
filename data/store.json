@@ -263,6 +263,149 @@
       "photo": "/uploads/cream-bear-basket.jpg",
       "colorway": "#efe6da",
       "inStock": true
+    },
+    {
+      "id": "p_croissant_keychain",
+      "name": "Croissant Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 3,
+      "description": "A tiny hand-crocheted croissant for your keys — golden, flaky-cute, zero calories.",
+      "photo": "/uploads/croissant-keychain.jpg",
+      "colorway": "#C08A3E",
+      "inStock": true
+    },
+    {
+      "id": "p_moon_keychain",
+      "name": "Moon Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 3,
+      "description": "A soft yellow crescent moon with a matching tassel. Sweet dreams wherever you go.",
+      "photo": "/uploads/moon-keychain.jpg",
+      "colorway": "#EFE083",
+      "inStock": true
+    },
+    {
+      "id": "p_bag_mustard",
+      "name": "Mini Bag Keychain — Mustard",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "An itty-bitty crochet handbag in warm mustard with a suede tassel and clasp.",
+      "photo": "/uploads/bag-mustard.jpg",
+      "colorway": "#D9A521",
+      "inStock": true
+    },
+    {
+      "id": "p_bag_pink_sparkle",
+      "name": "Mini Bag Keychain — Pink Sparkle",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A tiny pink handbag with a sparkle thread woven through and a white tassel.",
+      "photo": "/uploads/bag-pink-sparkle.jpg",
+      "colorway": "#E3A7C0",
+      "inStock": true
+    },
+    {
+      "id": "p_bag_teal",
+      "name": "Mini Bag Keychain — Teal",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A miniature teal handbag with a lime tassel. Clips to keys or a backpack.",
+      "photo": "/uploads/bag-teal.jpg",
+      "colorway": "#4E8A8B",
+      "inStock": true
+    },
+    {
+      "id": "p_bag_cream",
+      "name": "Mini Bag Keychain — Cream",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A little cream handbag with a plum tassel — quiet, classy, tiny.",
+      "photo": "/uploads/bag-cream.jpg",
+      "colorway": "#E5DCCB",
+      "inStock": true
+    },
+    {
+      "id": "p_bag_orange",
+      "name": "Mini Bag Keychain — Orange",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A bright orange mini handbag with a taupe tassel and swivel clasp.",
+      "photo": "/uploads/bag-orange.jpg",
+      "colorway": "#E8871E",
+      "inStock": true
+    },
+    {
+      "id": "p_bible_pink",
+      "name": "Mini Bible Keychain — Pink",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 8,
+      "description": "A palm-size crochet Bible in soft pink with a stitched cross and tassel.",
+      "photo": "/uploads/bible-pink.jpg",
+      "colorway": "#F0B7C8",
+      "inStock": true
+    },
+    {
+      "id": "p_bible_cream_gold",
+      "name": "Mini Bible Keychain — Cream & Gold",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 8,
+      "description": "Cream yarn with a golden shimmer and a purple cross — a tiny keepsake Bible.",
+      "photo": "/uploads/bible-cream-gold.jpg",
+      "colorway": "#EFE5CE",
+      "inStock": true
+    },
+    {
+      "id": "p_bible_grey",
+      "name": "Mini Bible Keychain — Grey",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 8,
+      "description": "A grey marl crochet Bible with a white cross and cream trim.",
+      "photo": "/uploads/bible-grey.jpg",
+      "colorway": "#8D8A87",
+      "inStock": true
+    },
+    {
+      "id": "p_bible_mauve",
+      "name": "Mini Bible Keychain — Mauve",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 8,
+      "description": "Dusty rose and white with a stitched cross — soft and thoughtful.",
+      "photo": "/uploads/bible-mauve.jpg",
+      "colorway": "#C88999",
+      "inStock": true
+    },
+    {
+      "id": "p_bible_orange",
+      "name": "Mini Bible Keychain — Orange",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 8,
+      "description": "A bold orange crochet Bible with a clean white cross.",
+      "photo": "/uploads/bible-orange.jpg",
+      "colorway": "#EA6A1F",
+      "inStock": true
+    },
+    {
+      "id": "p_bible_purple",
+      "name": "Mini Bible Keychain — Purple",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 8,
+      "description": "Lavender purple with a white cross and tassel — a little pocket blessing.",
+      "photo": "/uploads/bible-purple.jpg",
+      "colorway": "#A87FD6",
+      "inStock": true
     }
   ],
   "orders": [
