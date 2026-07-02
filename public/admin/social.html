@@ -8,19 +8,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/admin/admin.css">
 <style>
-  .drop{border:2px dashed var(--line);border-radius:14px;padding:26px;text-align:center;color:var(--ink-soft);background:var(--oat-deep);cursor:pointer;transition:border-color .2s}
-  .drop.dragover{border-color:var(--sage)}
+  .uploader{display:flex;flex-direction:column;gap:16px;margin-top:6px}
+  .uploader .hint{margin:0}
+  .drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+        width:100%;box-sizing:border-box;min-height:130px;border:2px dashed #c9bfae;border-radius:14px;
+        padding:28px 20px;text-align:center;color:var(--ink-soft);background:var(--oat-deep);
+        cursor:pointer;transition:border-color .2s, background .2s;font-size:.95rem}
+  .drop:hover{border-color:var(--sage)}
+  .drop.dragover{border-color:var(--sage);background:#eef2ea}
   .drop input{display:none}
-  .drop b{color:var(--ink)}
-  .cap{width:100%;margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;min-height:90px}
-  .up-btn{margin-top:12px}
-  .qitem{display:flex;gap:16px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff}
-  .qitem img,.qitem video{width:72px;height:90px;object-fit:cover;border-radius:8px;flex:none;background:#eee}
+  .drop b{color:var(--sage-deep);font-size:1.05rem}
+  .drop .fname{font-size:.85rem;color:var(--sage-deep);font-weight:700;min-height:1em}
+  .cap{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;
+       padding:14px;font:inherit;font-size:.95rem;min-height:96px;resize:vertical;background:#fff}
+  .cap:focus{outline:2px solid var(--sage);border-color:var(--sage)}
+  .up-row{display:flex;align-items:center;gap:14px}
+  .qlist{margin-top:14px}
+  .qitem{display:flex;gap:16px;align-items:center;border:1px solid var(--line);border-radius:12px;
+         padding:12px 14px;margin-bottom:10px;background:#fff}
+  .qitem img,.qitem video{width:72px;height:90px;object-fit:cover;border-radius:8px;flex:none;background:#e8e4dc}
   .qitem .qcap{flex:1;font-size:.85rem;color:var(--ink-soft);max-height:64px;overflow:hidden}
-  .qtype{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep)}
-  .qnext{background:var(--sage);color:#fff;border-radius:999px;font-size:.68rem;font-weight:700;padding:3px 10px}
-  .qdel{border:none;background:none;color:#b33;cursor:pointer;font-size:1.1rem}
-  .hint{font-size:.82rem;color:var(--ink-soft);margin:8px 0 18px}
+  .qtype{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep);margin-bottom:4px}
+  .qnext{background:var(--sage);color:#fff;border-radius:999px;font-size:.68rem;font-weight:700;padding:3px 10px;margin-left:8px}
+  .qdel{border:none;background:none;color:#b33;cursor:pointer;font-size:1.1rem;flex:none}
+  .hint{font-size:.82rem;color:var(--ink-soft);margin:8px 0 14px}
 </style>
 </head>
 <body>
@@ -31,19 +42,23 @@
 
     <div class="panel">
       <h2>Add to the queue</h2>
-      <p class="hint">Drop any image or video (max 150 MB). Videos are posted as Reels. Vertical 9:16 works best. Made something in CapCut, Canva or an AI tool? It goes here.</p>
-      <label class="drop" id="drop">
-        <input type="file" id="file" accept="image/*,video/*">
-        <b>Choose a file</b> or drag it here<br><span id="fname" style="font-size:.85rem"></span>
-      </label>
-      <textarea class="cap" id="caption" placeholder="Caption… (hashtags welcome)"></textarea>
-      <button class="btn up-btn" id="upBtn">Add to queue</button>
+      <div class="uploader">
+        <p class="hint">Drop any image or video (max 150 MB) — videos are posted as Reels, vertical 9:16 works best. Made something in CapCut, Canva or an AI tool? It goes here.</p>
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept="image/*,video/*">
+          <b>Choose a file</b>
+          <span>or drag &amp; drop it here</span>
+          <span class="fname" id="fname"></span>
+        </label>
+        <textarea class="cap" id="caption" placeholder="Caption… (hashtags welcome)"></textarea>
+        <div class="up-row"><button class="btn" id="upBtn">Add to queue</button></div>
+      </div>
     </div>
 
     <div class="panel">
       <h2>Queue</h2>
       <p class="hint">Cycles forever, top to bottom. The next item to post is marked.</p>
-      <div id="queue">Loading…</div>
+      <div id="queue" class="qlist">Loading…</div>
     </div>
   </main>
 </div>
@@ -64,9 +79,9 @@ async function render(){
   const next = data.items.length ? data.nextIndex % data.items.length : 0;
   $('queue').innerHTML = data.items.map((it,i)=>`
     <div class="qitem">
-      ${it.type==='reel' ? `<video src="${it.file}" muted></video>` : `<img src="${it.file}" loading="lazy">`}
-      <div style="flex:1">
-        <div class="qtype">${it.type==='reel'?'Reel':'Image'} ${i===next?'<span class="qnext">next up</span>':''}</div>
+      ${it.type==='reel' ? `<video src="${it.file}#t=0.5" muted preload="metadata"></video>` : `<img src="${it.file}" loading="lazy">`}
+      <div style="flex:1;min-width:0">
+        <div class="qtype">${it.type==='reel'?'Reel':'Image'}${i===next?'<span class="qnext">next up</span>':''}</div>
         <div class="qcap">${esc(it.caption||'')}</div>
       </div>
       <button class="qdel" data-id="${it.id}" title="Remove">✕</button>
