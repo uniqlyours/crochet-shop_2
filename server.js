@@ -8,6 +8,7 @@ import { checkPassword, issueCookie, clearCookie, isAuthed, requireAdmin } from 
 import { sendOrderEmails, sendCustomRequestEmail } from './lib/mailer.js';
 import { stripeEnabled, createCheckoutSession, getCheckoutSession, verifyWebhookSignature } from './lib/stripe.js';
 import { instagramEnabled, maybeAutoPost } from './lib/instagram.js';
+import { GUIDES } from './lib/guides.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -299,10 +300,15 @@ app.get('/sitemap.xml', (_req, res) => {
   const productUrls = products.map(p =>
     `  <url><loc>${SITE_URL}/product/${encodeURIComponent(p.id)}</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`
   ).join('\n');
+  const guideUrls = [`  <url><loc>${SITE_URL}/gifts</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>`]
+    .concat(GUIDES.map(g =>
+      `  <url><loc>${SITE_URL}/gifts/${g.slug}</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>`))
+    .join('\n');
   res.type('application/xml').send(
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     `  <url><loc>${SITE_URL}/</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>\n` +
+    guideUrls + '\n' +
     productUrls + `\n</urlset>\n`
   );
 });
@@ -369,6 +375,113 @@ app.get('/product/:id', (req, res) => {
     <a class="back" href="/#shop">← Browse everything</a>
   </div>
 </div></div></body></html>`);
+});
+
+// ---------- SEO: gift-guide landing pages ----------
+const guideShell = (title, metaDesc, url, ld, body) => `<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escHtml(title)} — UNIQLYours</title>
+<meta name="description" content="${escHtml(metaDesc)}">
+<link rel="canonical" href="${url}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="UNIQLYours">
+<meta property="og:title" content="${escHtml(title)}"><meta property="og:description" content="${escHtml(metaDesc)}">
+<meta property="og:url" content="${url}"><meta property="og:image" content="${SITE_URL}/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&family=Merienda:wght@700&family=Satisfy&display=swap" rel="stylesheet">
+${ld.map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join('\n')}
+<style>
+  body{margin:0;font-family:Nunito,sans-serif;background:#FCFDFC;color:#333A33}
+  .wrap{max-width:1060px;margin:0 auto;padding:28px 20px 60px}
+  a.brand{text-decoration:none;color:#333A33;font-family:Merienda,cursive;font-weight:700;font-size:1.5rem}
+  a.brand i{font-family:Satisfy,cursive;font-style:normal;color:#7C9A73;font-size:1.15em}
+  .crumb{font-size:.85rem;color:#7A827A;margin:18px 0 8px}
+  .crumb a{color:#5E7D55;text-decoration:none}
+  h1{font-family:Quicksand,sans-serif;font-size:2.1rem;margin:6px 0 14px}
+  p.lead{line-height:1.7;color:#5A625A;max-width:760px;margin:0 0 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin:30px 0 10px}
+  .card{border:1px solid #E7ECE6;border-radius:16px;overflow:hidden;background:#fff;text-decoration:none;color:inherit;display:block}
+  .card img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block}
+  .card .cb{padding:12px 14px}
+  .card .nm{font-weight:700;font-family:Quicksand,sans-serif}
+  .card .pr{color:#5E7D55;font-weight:700;margin-top:4px}
+  h2{font-family:Quicksand,sans-serif;margin:36px 0 12px}
+  .faq{border-top:1px solid #E7ECE6;padding:16px 0;max-width:760px}
+  .faq b{display:block;margin-bottom:6px;font-family:Quicksand,sans-serif}
+  .faq p{margin:0;color:#5A625A;line-height:1.65}
+  .more{margin-top:34px;font-size:.92rem;color:#5A625A}
+  .more a{color:#5E7D55}
+  .cta{display:inline-block;background:#7C9A73;color:#fff;text-decoration:none;font-weight:700;padding:13px 26px;border-radius:999px;margin-top:16px}
+</style></head><body><div class="wrap">
+<a class="brand" href="/">UNIQLY<i>ours</i></a>
+${body}
+</div></body></html>`;
+
+const guideCrumb = (name, url) => ({
+  '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'UNIQLYours', item: SITE_URL + '/' },
+    { '@type': 'ListItem', position: 2, name: 'Gift guides', item: SITE_URL + '/gifts' },
+    { '@type': 'ListItem', position: 3, name, item: url }
+  ]
+});
+
+app.get('/gifts', (_req, res) => {
+  const url = SITE_URL + '/gifts';
+  const body = `
+<div class="crumb"><a href="/">Home</a> › Gift guides</div>
+<h1>Gift guides</h1>
+<p class="lead">Handmade crochet gift ideas for every person and occasion — each guide is a hand-picked selection from our small-batch studio.</p>
+<div class="grid">
+${GUIDES.map(g => {
+    const p = db.getProducts({ onlyInStock: true }).filter(x => x.photo);
+    const first = g.pick(p)[0];
+    return `<a class="card" href="/gifts/${g.slug}">
+      ${first ? `<img src="${escHtml(first.photo)}" alt="${escHtml(g.title)}" loading="lazy">` : ''}
+      <div class="cb"><div class="nm">${escHtml(g.h1)}</div><div class="pr">View guide →</div></div></a>`;
+  }).join('\n')}
+</div>`;
+  res.send(guideShell('Gift Guides — Handmade Crochet Gift Ideas',
+    'Handmade crochet gift guides — Christmas, baby showers, First Communion favors, Mother’s Day and more. Small-batch, hooked by hand.',
+    url,
+    [{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Gift guides', url }],
+    body));
+});
+
+app.get('/gifts/:slug', (req, res) => {
+  const g = GUIDES.find(x => x.slug === req.params.slug);
+  if (!g) return res.status(404).redirect('/gifts');
+  const url = `${SITE_URL}/gifts/${g.slug}`;
+  const products = g.pick(db.getProducts({ onlyInStock: true }).filter(p => p.photo));
+  const faqLd = {
+    '@context': 'https://schema.org', '@type': 'FAQPage',
+    mainEntity: g.faqs.map(f => ({
+      '@type': 'Question', name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a }
+    }))
+  };
+  const listLd = {
+    '@context': 'https://schema.org', '@type': 'ItemList',
+    itemListElement: products.map((p, i) => ({
+      '@type': 'ListItem', position: i + 1,
+      url: `${SITE_URL}/product/${encodeURIComponent(p.id)}`, name: p.name
+    }))
+  };
+  const body = `
+<div class="crumb"><a href="/">Home</a> › <a href="/gifts">Gift guides</a> › ${escHtml(g.h1)}</div>
+<h1>${escHtml(g.h1)}</h1>
+${g.intro.map(t => `<p class="lead">${escHtml(t)}</p>`).join('\n')}
+<div class="grid">
+${products.map(p => `<a class="card" href="/product/${encodeURIComponent(p.id)}">
+  <img src="${escHtml(p.photo)}" alt="${escHtml(p.name)} — handmade crochet" loading="lazy">
+  <div class="cb"><div class="nm">${escHtml(p.name)}</div><div class="pr">$${Number(p.price).toFixed(2)}</div></div></a>`).join('\n')}
+</div>
+<a class="cta" href="/#custom">Request something custom</a>
+<h2>Good to know</h2>
+${g.faqs.map(f => `<div class="faq"><b>${escHtml(f.q)}</b><p>${escHtml(f.a)}</p></div>`).join('\n')}
+<div class="more">More guides: ${GUIDES.filter(x => x.slug !== g.slug).map(x => `<a href="/gifts/${x.slug}">${escHtml(x.h1)}</a>`).join(' · ')}</div>`;
+  res.send(guideShell(g.title, g.metaDesc, url, [faqLd, listLd, guideCrumb(g.h1, url)], body));
 });
 
 // Homepage: inject an ItemList of products (structured data) into the static HTML.
