@@ -313,6 +313,38 @@ app.get('/sitemap.xml', (_req, res) => {
   );
 });
 
+// ---------- Google Merchant Center product feed ----------
+// Add this URL as a scheduled feed in Merchant Center: /merchant-feed.xml
+app.get('/merchant-feed.xml', (_req, res) => {
+  const items = db.getProducts({ onlyInStock: true }).filter(p => p.photo).map(p => {
+    const url = `${SITE_URL}/product/${encodeURIComponent(p.id)}`;
+    const desc = (p.description || `Handmade crochet ${p.name} by UNIQLYours.`) +
+      ' Hand-crocheted in small batches — no two pieces are exactly alike.';
+    return `  <item>
+    <g:id>${escHtml(p.id)}</g:id>
+    <g:title>${escHtml(p.name)} — Handmade Crochet</g:title>
+    <g:description>${escHtml(desc)}</g:description>
+    <g:link>${url}</g:link>
+    <g:image_link>${SITE_URL}${escHtml(p.photo)}</g:image_link>
+    <g:availability>in_stock</g:availability>
+    <g:price>${Number(p.price).toFixed(2)} USD</g:price>
+    <g:condition>new</g:condition>
+    <g:brand>UNIQLYours</g:brand>
+    <g:identifier_exists>false</g:identifier_exists>
+    <g:product_type>${escHtml(p.category || 'Handmade')}</g:product_type>
+  </item>`;
+  }).join('\n');
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+<channel>
+  <title>UNIQLYours — Handmade Crochet</title>
+  <link>${SITE_URL}</link>
+  <description>Handmade crochet baskets, keychains, handbags and gifts.</description>
+${items}
+</channel>
+</rss>`);
+});
+
 // ---------- SEO: server-rendered product pages ----------
 const escHtml = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
   .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -342,6 +374,12 @@ app.get('/product/:id', (req, res) => {
 <meta property="og:title" content="${escHtml(p.name)} — UNIQLYours">
 <meta property="og:description" content="${escHtml(desc)}">
 <meta property="og:url" content="${url}"><meta property="og:image" content="${img}">
+<meta property="og:price:amount" content="${Number(p.price).toFixed(2)}">
+<meta property="og:price:currency" content="USD">
+<meta property="product:price:amount" content="${Number(p.price).toFixed(2)}">
+<meta property="product:price:currency" content="USD">
+<meta property="og:availability" content="instock">
+<meta property="product:availability" content="in stock">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
