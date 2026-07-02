@@ -33,6 +33,7 @@ function sidebar(active){
     ${item('/admin/import.html','Import (Excel)','import')}
     ${item('/admin/orders.html','Orders','orders')}
     ${item('/admin/custom-requests.html','Custom requests','custom')}
+    ${item('/admin/social.html','Instagram','social')}
     ${item('/admin/settings.html','Settings','settings')}
     <div class="spacer"></div>
     <a class="view-shop" href="/" target="_blank">View shop ↗</a>

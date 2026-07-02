@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instagram · UNIQLYours admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/admin/admin.css">
+<style>
+  .drop{border:2px dashed var(--line);border-radius:14px;padding:26px;text-align:center;color:var(--ink-soft);background:var(--oat-deep);cursor:pointer;transition:border-color .2s}
+  .drop.dragover{border-color:var(--sage)}
+  .drop input{display:none}
+  .drop b{color:var(--ink)}
+  .cap{width:100%;margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;min-height:90px}
+  .up-btn{margin-top:12px}
+  .qitem{display:flex;gap:16px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff}
+  .qitem img,.qitem video{width:72px;height:90px;object-fit:cover;border-radius:8px;flex:none;background:#eee}
+  .qitem .qcap{flex:1;font-size:.85rem;color:var(--ink-soft);max-height:64px;overflow:hidden}
+  .qtype{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sage-deep)}
+  .qnext{background:var(--sage);color:#fff;border-radius:999px;font-size:.68rem;font-weight:700;padding:3px 10px}
+  .qdel{border:none;background:none;color:#b33;cursor:pointer;font-size:1.1rem}
+  .hint{font-size:.82rem;color:var(--ink-soft);margin:8px 0 18px}
+</style>
+</head>
+<body>
+<div class="layout" id="layout" style="visibility:hidden">
+  <div id="side"></div>
+  <main class="main">
+    <div class="page-head"><div><h1>Instagram</h1><p>The auto-posting queue — every 2 days the shop alternates a product photo with an item from this list.</p></div></div>
+
+    <div class="panel">
+      <h2>Add to the queue</h2>
+      <p class="hint">Drop any image or video (max 150 MB). Videos are posted as Reels. Vertical 9:16 works best. Made something in CapCut, Canva or an AI tool? It goes here.</p>
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept="image/*,video/*">
+        <b>Choose a file</b> or drag it here<br><span id="fname" style="font-size:.85rem"></span>
+      </label>
+      <textarea class="cap" id="caption" placeholder="Caption… (hashtags welcome)"></textarea>
+      <button class="btn up-btn" id="upBtn">Add to queue</button>
+    </div>
+
+    <div class="panel">
+      <h2>Queue</h2>
+      <p class="hint">Cycles forever, top to bottom. The next item to post is marked.</p>
+      <div id="queue">Loading…</div>
+    </div>
+  </main>
+</div>
+<script src="/admin/admin.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let picked = null;
+
+(async function(){
+  if(!(await guard())) return;
+  $('side').outerHTML = sidebar('social');
+  $('layout').style.visibility='visible';
+  render();
+})();
+
+async function render(){
+  const data = await apiJSON('/api/admin/social');
+  const next = data.items.length ? data.nextIndex % data.items.length : 0;
+  $('queue').innerHTML = data.items.map((it,i)=>`
+    <div class="qitem">
+      ${it.type==='reel' ? `<video src="${it.file}" muted></video>` : `<img src="${it.file}" loading="lazy">`}
+      <div style="flex:1">
+        <div class="qtype">${it.type==='reel'?'Reel':'Image'} ${i===next?'<span class="qnext">next up</span>':''}</div>
+        <div class="qcap">${esc(it.caption||'')}</div>
+      </div>
+      <button class="qdel" data-id="${it.id}" title="Remove">✕</button>
+    </div>`).join('') || '<p class="hint">Queue is empty.</p>';
+  document.querySelectorAll('.qdel').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Remove this from the queue?')) return;
+    await api('/api/admin/social/'+b.dataset.id, {method:'DELETE'});
+    render();
+  }));
+}
+
+const drop = $('drop');
+drop.addEventListener('dragover', e=>{e.preventDefault(); drop.classList.add('dragover');});
+drop.addEventListener('dragleave', ()=>drop.classList.remove('dragover'));
+drop.addEventListener('drop', e=>{
+  e.preventDefault(); drop.classList.remove('dragover');
+  if(e.dataTransfer.files[0]){ picked = e.dataTransfer.files[0]; $('fname').textContent = picked.name; }
+});
+$('file').addEventListener('change', ()=>{ picked = $('file').files[0]; $('fname').textContent = picked ? picked.name : ''; });
+
+$('upBtn').addEventListener('click', async ()=>{
+  if(!picked){ alert('Pick an image or video first.'); return; }
+  const btn = $('upBtn'); btn.disabled = true; btn.textContent = 'Uploading…';
+  try{
+    const fd = new FormData();
+    fd.append('media', picked);
+    fd.append('caption', $('caption').value);
+    const r = await fetch('/api/admin/social', {method:'POST', body: fd});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error||'Upload failed');
+    picked = null; $('fname').textContent=''; $('caption').value=''; $('file').value='';
+    toast('Added to the queue');
+    render();
+  }catch(e){ alert(e.message); }
+  btn.disabled = false; btn.textContent = 'Add to queue';
+});
+</script>
+</body>
+</html>

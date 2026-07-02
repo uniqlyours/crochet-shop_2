@@ -235,6 +235,35 @@ app.post('/api/admin/photos', requireAdmin, uploadKeep.array('photos', 60), (req
   res.json({ files });
 });
 
+// ---------- Instagram queue (drop folder) ----------
+// Accepts images and videos; videos become Reels in the rotation.
+const socialDir = path.join(UPLOAD_DIR, 'social');
+fs.mkdirSync(socialDir, { recursive: true });
+const uploadSocial = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, socialDir),
+    filename: (_req, file, cb) => cb(null, safeName(file.originalname))
+  }),
+  limits: { fileSize: 150 * 1024 * 1024 }, // 150 MB for videos
+  fileFilter: (_req, file, cb) => cb(null, /^(image|video)\//.test(file.mimetype))
+});
+app.get('/api/admin/social', requireAdmin, (_req, res) => {
+  res.json({ items: db.getSocial(), nextIndex: (Number(db.getSettings().igSocialIdx) || 0) });
+});
+app.post('/api/admin/social', requireAdmin, uploadSocial.single('media'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Add an image or video file.' });
+  const type = /^video\//.test(req.file.mimetype) ? 'reel' : 'image';
+  const item = db.addSocial({
+    type,
+    file: '/uploads/social/' + req.file.filename,
+    caption: req.body?.caption || ''
+  });
+  res.json(item);
+});
+app.delete('/api/admin/social/:id', requireAdmin, (req, res) => {
+  res.json({ ok: db.removeSocial(req.params.id) });
+});
+
 // bulk product import (rows parsed from the spreadsheet in the browser)
 app.post('/api/admin/import', requireAdmin, (req, res) => {
   const { products, mode } = req.body || {};
