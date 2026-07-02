@@ -406,6 +406,72 @@
       "photo": "/uploads/bible-purple.jpg",
       "colorway": "#A87FD6",
       "inStock": true
+    },
+    {
+      "id": "p_royal_blue_fish_keychain",
+      "name": "Royal Blue Fish Keychain",
+      "kind": "Keychain",
+      "category": "Little things",
+      "price": 5,
+      "description": "A bold royal blue crochet fish, hand-hooked and ready to clip onto keys or a bag.",
+      "photo": "/uploads/royal-blue-fish.jpg",
+      "colorway": "#2F5FC4",
+      "inStock": true
+    },
+    {
+      "id": "p_cherry_charm",
+      "name": "Cherry Charm — Heart & Cat",
+      "kind": "Charm",
+      "category": "Little things",
+      "price": 8,
+      "description": "A cream bow with a red heart and a little black cat dangling like cherries. Clips to any bag.",
+      "photo": "/uploads/cherry-charm.jpg",
+      "colorway": "#B8302E",
+      "inStock": true
+    },
+    {
+      "id": "p_handbag_brown",
+      "name": "Cocoa & Gold Handbag",
+      "kind": "Handbag",
+      "category": "Handbags",
+      "price": 40,
+      "description": "A chunky hand-crocheted shoulder bag in deep cocoa with a golden shimmer thread and gold-tone rings.",
+      "photo": "/uploads/handbag-brown.jpg",
+      "colorway": "#5B4436",
+      "inStock": true
+    },
+    {
+      "id": "p_handbag_red_grey",
+      "name": "Scarlet & Grey Shoulder Bag",
+      "kind": "Handbag",
+      "category": "Handbags",
+      "price": 40,
+      "description": "A two-tone crossbody in scarlet and soft grey, crocheted from chunky recycled tee yarn.",
+      "photo": "/uploads/handbag-red-grey.jpg",
+      "colorway": "#C23B2E",
+      "inStock": true
+    },
+    {
+      "id": "p_handbag_purple",
+      "name": "Plum Tote with Silk Scarf",
+      "kind": "Handbag",
+      "category": "Handbags",
+      "price": 40,
+      "description": "A structured plum tote with clear handles wrapped in a printed silk scarf. One of a kind.",
+      "photo": "/uploads/handbag-purple.jpg",
+      "colorway": "#5C3A6E",
+      "inStock": true
+    },
+    {
+      "id": "p_purse_pink",
+      "name": "Pink Coin Purse",
+      "kind": "Purse",
+      "category": "Handbags",
+      "price": 40,
+      "description": "A puff-stitch coin purse in baby pink with a sparkly flower button. Fits cards, coins and little treasures.",
+      "photo": "/uploads/purse-pink.jpg",
+      "colorway": "#F2BFD3",
+      "inStock": true
     }
   ],
   "orders": [

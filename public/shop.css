@@ -59,7 +59,7 @@ nav a:hover{color:var(--sage-deep)}
 .section-head{text-align:center;max-width:560px;margin:0 auto 30px}
 .section-head h2{font-size:clamp(1.8rem,3.6vw,2.5rem);margin-top:8px}
 .section-head p{color:var(--ink-soft);margin-top:10px}
-.collection-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.collection-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
 .collection-tile{position:relative;display:block;border-radius:20px;overflow:hidden;text-decoration:none;aspect-ratio:1/1;background:var(--sage-tint);border:1px solid var(--line);box-shadow:0 20px 40px -30px var(--shadow);transition:transform .2s,box-shadow .2s}
 .collection-tile:hover{transform:translateY(-5px);box-shadow:0 30px 50px -28px var(--shadow)}
 .collection-tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
