@@ -313,6 +313,38 @@ app.get('/sitemap.xml', (_req, res) => {
   );
 });
 
+// ---------- Store policies (linked from Google Merchant Center) ----------
+app.get('/returns', (_req, res) => {
+  const url = SITE_URL + '/returns';
+  res.send(`<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Returns & Exchanges — UNIQLYours</title>
+<meta name="description" content="UNIQLYours return policy — every piece is handmade to order in small batches; all sales are final.">
+<link rel="canonical" href="${url}">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&family=Merienda:wght@700&family=Satisfy&display=swap" rel="stylesheet">
+<style>
+ body{margin:0;font-family:Nunito,sans-serif;background:#FCFDFC;color:#333A33}
+ .wrap{max-width:760px;margin:0 auto;padding:28px 20px 60px}
+ a.brand{text-decoration:none;color:#333A33;font-family:Merienda,cursive;font-weight:700;font-size:1.5rem}
+ a.brand i{font-family:Satisfy,cursive;font-style:normal;color:#7C9A73;font-size:1.15em}
+ h1{font-family:Quicksand,sans-serif;font-size:2rem;margin:26px 0 14px}
+ h2{font-family:Quicksand,sans-serif;font-size:1.2rem;margin:26px 0 8px}
+ p{line-height:1.7;color:#5A625A}
+ .back{color:#5E7D55;text-decoration:none;font-weight:700}
+</style></head><body><div class="wrap">
+<a class="brand" href="/">UNIQLY<i>ours</i></a>
+<h1>Returns &amp; Exchanges</h1>
+<p>Every UNIQLYours piece is crocheted by hand in small batches — many are one of a kind. Because of the handmade nature of our products, <b>all sales are final</b>: we don’t accept returns or exchanges.</p>
+<h2>Arrived damaged?</h2>
+<p>If your order arrives damaged or isn’t what you ordered, email us at <a href="mailto:order@uniqlyours.com">order@uniqlyours.com</a> within 7 days of delivery with a photo, and we’ll make it right.</p>
+<h2>Custom orders</h2>
+<p>Custom pieces are made just for you and are confirmed by quote before we begin — they can’t be returned or exchanged.</p>
+<p><a class="back" href="/">← Back to the shop</a></p>
+</div></body></html>`);
+});
+
 // ---------- Google Merchant Center product feed ----------
 // Add this URL as a scheduled feed in Merchant Center: /merchant-feed.xml
 app.get('/merchant-feed.xml', (_req, res) => {
