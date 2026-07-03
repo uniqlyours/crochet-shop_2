@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000">
+  <rect width="800" height="1000" fill="#F7F4EF"/>
+  <g stroke="#5E7D55" stroke-width="26" stroke-linecap="round" fill="none">
+    <path d="M400 560 C 412 700, 392 780, 400 880"/>
+  </g>
+  <g fill="#7C9A73">
+    <path d="M400 720 C 330 680, 290 690, 250 650 C 320 640, 370 670, 400 720 Z"/>
+  </g>
+  <g>
+    <circle cx="400" cy="420" r="190" fill="#D98A9E"/>
+    <g fill="#E29AAC">
+      <circle cx="290" cy="360" r="70"/><circle cx="400" cy="310" r="72"/><circle cx="510" cy="360" r="70"/>
+      <circle cx="530" cy="470" r="68"/><circle cx="400" cy="530" r="72"/><circle cx="270" cy="470" r="68"/>
+    </g>
+    <g fill="#EBACBC">
+      <circle cx="340" cy="380" r="58"/><circle cx="460" cy="380" r="58"/><circle cx="460" cy="470" r="56"/><circle cx="340" cy="470" r="56"/>
+    </g>
+    <g fill="#F2BFCB">
+      <circle cx="400" cy="390" r="48"/><circle cx="445" cy="440" r="46"/><circle cx="355" cy="440" r="46"/>
+    </g>
+    <circle cx="400" cy="425" r="40" fill="#E29AAC"/>
+    <circle cx="400" cy="425" r="22" fill="#D98A9E"/>
+    <g fill="none" stroke="#C4718A" stroke-width="4" opacity="0.35">
+      <path d="M330 350 q70 -40 140 0"/><path d="M310 430 q90 60 180 0"/><path d="M355 480 q45 30 90 0"/>
+    </g>
+  </g>
+  <text x="400" y="950" text-anchor="middle" font-family="Georgia, serif" font-size="34" fill="#7A827A" font-style="italic">sample art — real photo coming soon</text>
+</svg>
