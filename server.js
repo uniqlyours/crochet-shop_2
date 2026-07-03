@@ -382,11 +382,28 @@ const escHtml = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt
   .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 app.get('/product/:id', (req, res) => {
-  const p = db.getProducts({ onlyInStock: true }).find(x => x.id === req.params.id);
+  const all = db.getProducts({ onlyInStock: true });
+  const p = all.find(x => x.id === req.params.id);
   if (!p) return res.status(404).redirect('/#shop');
   const img = p.photo ? SITE_URL + p.photo : SITE_URL + '/og-image.png';
   const url = `${SITE_URL}/product/${encodeURIComponent(p.id)}`;
   const desc = p.description || `Hand-crocheted ${p.name} by UNIQLYours.`;
+  // Long-tail SEO title: append "Handmade Crochet <kind>" unless the name already says so.
+  const kind = (p.kind || '').trim();
+  const nameLc = p.name.toLowerCase();
+  const tailWords = ['handmade crochet', kind && !nameLc.includes(kind.toLowerCase()) ? kind : '']
+    .filter(Boolean).join(' ');
+  const seoTitle = `${p.name} — ${tailWords.replace(/\b\w/g, c => c.toUpperCase())}`;
+  // Meta description: real copy + brand/price hook, capped near 155 chars.
+  const metaDesc = (desc.length > 110 ? desc.slice(0, 110).replace(/\s+\S*$/, '') + '…' : desc) +
+    ` Handmade crochet by UNIQLYours — $${Number(p.price).toFixed(2)}, ships from the USA.`;
+  const altText = `${p.name} — handmade crochet ${kind || 'piece'} by UNIQLYours`;
+  // Related products: same category first, then same kind, then anything else.
+  const related = [
+    ...all.filter(x => x.id !== p.id && x.photo && x.category && x.category === p.category),
+    ...all.filter(x => x.id !== p.id && x.photo && x.kind && x.kind === p.kind),
+    ...all.filter(x => x.id !== p.id && x.photo)
+  ].filter((x, i, arr) => arr.findIndex(y => y.id === x.id) === i).slice(0, 4);
   const ld = {
     '@context': 'https://schema.org', '@type': 'Product',
     name: p.name, description: desc, image: [img], url,
@@ -397,10 +414,18 @@ app.get('/product/:id', (req, res) => {
       seller: { '@type': 'Organization', name: 'UNIQLYours' }
     }
   };
+  const crumbLd = {
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'UNIQLYours', item: SITE_URL + '/' },
+      { '@type': 'ListItem', position: 2, name: p.category || 'Shop', item: SITE_URL + '/#shop' },
+      { '@type': 'ListItem', position: 3, name: p.name, item: url }
+    ]
+  };
   res.send(`<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escHtml(p.name)} — UNIQLYours</title>
-<meta name="description" content="${escHtml(desc)}">
+<title>${escHtml(seoTitle)} | UNIQLYours</title>
+<meta name="description" content="${escHtml(metaDesc)}">
 <link rel="canonical" href="${url}">
 <meta property="og:type" content="product"><meta property="og:site_name" content="UNIQLYours">
 <meta property="og:title" content="${escHtml(p.name)} — UNIQLYours">
@@ -417,6 +442,7 @@ app.get('/product/:id', (req, res) => {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&family=Merienda:wght@700&family=Satisfy&display=swap" rel="stylesheet">
 <script type="application/ld+json">${JSON.stringify(ld)}</script>
+<script type="application/ld+json">${JSON.stringify(crumbLd)}</script>
 <style>
   body{margin:0;font-family:Nunito,sans-serif;background:#FCFDFC;color:#333A33}
   .wrap{max-width:880px;margin:0 auto;padding:28px 20px}
@@ -431,11 +457,18 @@ app.get('/product/:id', (req, res) => {
   .btn{display:inline-block;background:#7C9A73;color:#fff;text-decoration:none;font-weight:700;
        padding:13px 26px;border-radius:999px;margin-top:10px}
   .back{display:inline-block;margin-top:18px;color:#7C9A73;text-decoration:none;font-weight:700}
+  h2.rel{font-family:Quicksand,sans-serif;margin:44px 0 14px;font-size:1.25rem}
+  .relgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px}
+  .rcard{border:1px solid #E7ECE6;border-radius:14px;overflow:hidden;background:#fff;text-decoration:none;color:inherit;display:block}
+  .rcard img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block}
+  .rcard .cb{padding:10px 12px}
+  .rcard .nm{font-weight:700;font-family:Quicksand,sans-serif;font-size:.92rem}
+  .rcard .pr{color:#5E7D55;font-weight:700;margin-top:3px;font-size:.9rem}
   @media(max-width:700px){.prod{grid-template-columns:1fr}}
 </style></head><body><div class="wrap">
 <a class="brand" href="/">UNIQLY<i>ours</i></a>
 <div class="prod">
-  <img src="${escHtml(p.photo || '/og-image.png')}" alt="${escHtml(p.name)}">
+  <img src="${escHtml(p.photo || '/og-image.png')}" alt="${escHtml(altText)}" fetchpriority="high">
   <div>
     <span class="kind">${escHtml(p.kind || 'Handmade')} · ${escHtml(p.category || '')}</span>
     <h1>${escHtml(p.name)}</h1>
@@ -444,7 +477,14 @@ app.get('/product/:id', (req, res) => {
     <a class="btn" href="/?add=${encodeURIComponent(p.id)}#shop">Add to basket</a><br>
     <a class="back" href="/#shop">← Browse everything</a>
   </div>
-</div></div></body></html>`);
+</div>
+${related.length ? `<h2 class="rel">You might also like</h2>
+<div class="relgrid">
+${related.map(r => `<a class="rcard" href="/product/${encodeURIComponent(r.id)}">
+  <img src="${escHtml(r.photo)}" alt="${escHtml(r.name)} — handmade crochet by UNIQLYours" loading="lazy">
+  <div class="cb"><div class="nm">${escHtml(r.name)}</div><div class="pr">$${Number(r.price).toFixed(2)}</div></div></a>`).join('\n')}
+</div>` : ''}
+</div></body></html>`);
 });
 
 // ---------- SEO: gift-guide landing pages ----------
@@ -572,8 +612,9 @@ app.get('/', (_req, res) => {
 // ---------- static files ----------
 // Serve uploaded photos from the (possibly volume-backed) uploads dir first, then
 // fall back to anything bundled under public/ (incl. the seed product images).
-app.use('/uploads', express.static(UPLOAD_DIR));
-app.use(express.static(path.join(__dirname, 'public')));
+// Cache headers: photos rarely change once uploaded (30d); other assets 1d.
+app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '30d' }));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1d' }));
 
 // Instagram auto-posting: checks hourly, posts when the interval has elapsed.
 // No-op until IG_ACCESS_TOKEN + IG_USER_ID are set in the environment.

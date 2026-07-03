@@ -26,7 +26,7 @@ function pickIcon(p){
 }
 const knit = c => `repeating-linear-gradient(45deg, ${c}55 0 6px, transparent 6px 12px), repeating-linear-gradient(-45deg, ${c}40 0 6px, transparent 6px 12px)`;
 function thumbInner(p){
-  if (p.photo) return `<img src="${p.photo}" alt="${esc(p.name)}">`;
+  if (p.photo) return `<img src="${p.photo}" alt="${esc(p.name)} — handmade crochet by UNIQLYours" loading="lazy" decoding="async">`;
   return pickIcon(p);
 }
 function thumbStyle(p){
