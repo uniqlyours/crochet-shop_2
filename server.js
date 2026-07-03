@@ -13,6 +13,14 @@ import { GUIDES } from './lib/guides.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
+// Google Analytics 4: set GA_MEASUREMENT_ID (G-XXXXXXX) in Railway to enable.
+// The snippet is injected into every public page; no-op until the ID is set.
+const GA_ID = process.env.GA_MEASUREMENT_ID || '';
+const gaSnippet = () => GA_ID
+  ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script>\n` +
+    `<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}` +
+    `gtag('js',new Date());gtag('config','${GA_ID}');</script>\n`
+  : '';
 // Railway (and most hosts) terminate HTTPS at a proxy in front of the app.
 // Trusting it lets the admin login cookie be marked Secure correctly over HTTPS.
 app.set('trust proxy', 1);
@@ -443,7 +451,7 @@ app.get('/product/:id', (req, res) => {
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&family=Merienda:wght@700&family=Satisfy&display=swap" rel="stylesheet">
 <script type="application/ld+json">${JSON.stringify(ld)}</script>
 <script type="application/ld+json">${JSON.stringify(crumbLd)}</script>
-<style>
+${gaSnippet()}<style>
   body{margin:0;font-family:Nunito,sans-serif;background:#FCFDFC;color:#333A33}
   .wrap{max-width:880px;margin:0 auto;padding:28px 20px}
   a.brand{text-decoration:none;color:#333A33;font-family:Merienda,cursive;font-weight:700;font-size:1.5rem}
@@ -501,7 +509,7 @@ const guideShell = (title, metaDesc, url, ld, body) => `<!doctype html><html lan
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&family=Merienda:wght@700&family=Satisfy&display=swap" rel="stylesheet">
 ${ld.map(x => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join('\n')}
-<style>
+${gaSnippet()}<style>
   body{margin:0;font-family:Nunito,sans-serif;background:#FCFDFC;color:#333A33}
   .wrap{max-width:1060px;margin:0 auto;padding:28px 20px 60px}
   a.brand{text-decoration:none;color:#333A33;font-family:Merienda,cursive;font-weight:700;font-size:1.5rem}
@@ -606,7 +614,7 @@ app.get('/', (_req, res) => {
     }))
   };
   res.type('html').send(INDEX_HTML.replace('</head>',
-    `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n</head>`));
+    `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n${gaSnippet()}</head>`));
 });
 
 // ---------- static files ----------
